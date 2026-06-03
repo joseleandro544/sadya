@@ -1,0 +1,323 @@
+import { useState } from 'react';
+import Navbar from './components/Navbar';
+import HeroMetrics from './components/HeroMetrics';
+import Categories from './components/Categories';
+import Promotions from './components/Promotions';
+import ProductGrid from './components/ProductGrid';
+import { X, Trash2, ShieldAlert, HeartHandshake, CheckCircle } from 'lucide-react';
+
+function App() {
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('all');
+  const [currentLocation, setCurrentLocation] = useState('📍 Calle 45 # 12-34, Bogotá');
+  const [userPreference, setUserPreference] = useState('none');
+  
+  // Shopping Cart States
+  const [cartItems, setCartItems] = useState([]);
+  const [isCartOpen, setIsCartOpen] = useState(false);
+  const [toast, setToast] = useState(null);
+
+  // Add to cart handler
+  const handleAddToCart = (product) => {
+    setCartItems((prev) => {
+      const existing = prev.find(item => item.product.id === product.id);
+      if (existing) {
+        return prev.map(item => 
+          item.product.id === product.id 
+            ? { ...item, quantity: item.quantity + 1 }
+            : item
+        );
+      }
+      return [...prev, { product, quantity: 1 }];
+    });
+
+    // Show custom toast notification
+    showToast(`¡Añadiste ${product.name} al carrito!`);
+  };
+
+  const showToast = (message) => {
+    setToast(message);
+    setTimeout(() => {
+      setToast(null);
+    }, 3000);
+  };
+
+  const handleUpdateQuantity = (productId, amount) => {
+    setCartItems((prev) => {
+      return prev.map(item => {
+        if (item.product.id === productId) {
+          const newQty = item.quantity + amount;
+          return newQty > 0 ? { ...item, quantity: newQty } : null;
+        }
+        return item;
+      }).filter(Boolean);
+    });
+  };
+
+  const handleRemoveItem = (productId) => {
+    setCartItems((prev) => prev.filter(item => item.product.id !== productId));
+  };
+
+  // Promotion Category click - sets category filter and scrolls to grid
+  const handleSelectPromoCategory = (categoryKey) => {
+    setSelectedCategory(categoryKey);
+    const element = document.getElementById('productos');
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
+  const cartCount = cartItems.reduce((acc, item) => acc + item.quantity, 0);
+  const cartSubtotal = cartItems.reduce((acc, item) => acc + (item.product.price * item.quantity), 0);
+
+  // Formatter for COP currency
+  const formatCurrency = (val) => {
+    return new Intl.NumberFormat('es-CO', {
+      style: 'currency',
+      currency: 'COP',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0
+    }).format(val).replace('COP', 'COP ');
+  };
+
+  return (
+    <div className="min-h-screen bg-[#f8fafc] text-slate-800 flex flex-col font-sans">
+      {/* 1. Header / Navbar */}
+      <Navbar 
+        searchQuery={searchQuery}
+        setSearchQuery={setSearchQuery}
+        cartCount={cartCount}
+        currentLocation={currentLocation}
+        setCurrentLocation={setCurrentLocation}
+        onOpenCart={() => setIsCartOpen(true)}
+      />
+
+      <main className="flex-grow">
+        {/* 2. Hero Section / Métricas */}
+        <HeroMetrics />
+
+        {/* 3. Categorías Carrusel */}
+        <Categories 
+          selectedCategory={selectedCategory}
+          setSelectedCategory={setSelectedCategory}
+        />
+
+        {/* 4. Súper Promociones */}
+        <Promotions 
+          onSelectPromoCategory={handleSelectPromoCategory}
+        />
+
+        {/* 5. Grid de Productos */}
+        <ProductGrid 
+          searchQuery={searchQuery}
+          selectedCategory={selectedCategory}
+          setSelectedCategory={setSelectedCategory}
+          onAddToCart={handleAddToCart}
+          userPreference={userPreference}
+          setUserPreference={setUserPreference}
+        />
+      </main>
+
+      {/* Footer */}
+      <footer className="bg-white border-t border-slate-100 py-12">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 pb-8 border-b border-slate-100">
+            <div>
+              <div className="flex items-center gap-2 mb-4">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-600 text-white font-extrabold shadow">
+                  S
+                </div>
+                <span className="text-lg font-bold text-slate-900">SADYA</span>
+              </div>
+              <p className="text-xs text-slate-400 max-w-xs">
+                SADYA es una plataforma de impacto social comprometida con erradicar el desperdicio de alimentos conectando excedentes de comida de calidad con personas que buscan ahorrar y cuidar del planeta.
+              </p>
+            </div>
+            
+            <div>
+              <h4 className="text-xs font-bold uppercase tracking-wider text-slate-900 mb-4">
+                Impacto Social
+              </h4>
+              <ul className="space-y-2 text-xs text-slate-500">
+                <li>• Familias Vulnerables Aseguradas</li>
+                <li>• Prevención de Emisiones de CO2</li>
+                <li>• Reducción de Pérdidas de Tiendas Locales</li>
+                <li>• Alianza con Bancos de Alimentos</li>
+              </ul>
+            </div>
+
+            <div>
+              <h4 className="text-xs font-bold uppercase tracking-wider text-slate-900 mb-4">
+                Contacto & Soporte
+              </h4>
+              <p className="text-xs text-slate-500 mb-2">
+                ¿Tienes una tienda y quieres unirte al cambio? Escríbenos.
+              </p>
+              <a href="mailto:soporte@sadya.org" className="text-xs font-bold text-blue-600 hover:underline">
+                soporte@sadya.org
+              </a>
+            </div>
+          </div>
+          <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <span className="text-xs text-slate-400">
+              © {new Date().getFullYear()} SADYA Marketplace. Todos los derechos reservados.
+            </span>
+            <div className="flex items-center gap-2 text-xs text-slate-400">
+              <span>Hecho con</span>
+              <HeartHandshake className="h-4 w-4 text-rose-500 animate-pulse" />
+              <span>por el Impacto Social</span>
+            </div>
+          </div>
+        </div>
+      </footer>
+
+      {/* Floating Cart Drawer (Slide-Over) */}
+      {isCartOpen && (
+        <div className="fixed inset-0 z-50 overflow-hidden">
+          {/* Background overlay */}
+          <div 
+            onClick={() => setIsCartOpen(false)}
+            className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity"
+          />
+
+          <div className="pointer-events-none fixed inset-y-0 right-0 flex max-w-full pl-10">
+            <div className="pointer-events-auto w-screen max-w-md transform transition-all duration-500">
+              <div className="flex h-full flex-col bg-white shadow-2xl rounded-l-3xl border-l border-slate-100">
+                
+                {/* Cart Header */}
+                <div className="flex items-center justify-between border-b border-slate-100 p-6">
+                  <div className="flex items-center gap-2">
+                    <h2 className="text-lg font-extrabold text-slate-950">
+                      Mi Carrito de Rescate
+                    </h2>
+                    <span className="rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-bold text-blue-700">
+                      {cartCount}
+                    </span>
+                  </div>
+                  <button
+                    onClick={() => setIsCartOpen(false)}
+                    className="rounded-full p-1.5 text-slate-400 hover:bg-slate-50 hover:text-slate-950 transition-colors"
+                  >
+                    <X className="h-5 w-5" />
+                  </button>
+                </div>
+
+                {/* Cart Body */}
+                <div className="flex-1 overflow-y-auto p-6 space-y-4 no-scrollbar">
+                  {cartItems.length > 0 ? (
+                    cartItems.map((item) => (
+                      <div 
+                        key={item.product.id}
+                        className="flex items-center gap-4 p-3 bg-slate-50 border border-slate-100 rounded-2xl group transition-all"
+                      >
+                        {/* Product Thumbnail */}
+                        <img 
+                          src={item.product.image} 
+                          alt={item.product.name} 
+                          className="h-16 w-16 rounded-xl object-cover border border-slate-200/50"
+                        />
+                        {/* Info details */}
+                        <div className="flex-1 min-w-0">
+                          <span className="text-[10px] font-bold text-blue-600 block uppercase">
+                            {item.product.store}
+                          </span>
+                          <h4 className="text-sm font-bold text-slate-900 truncate">
+                            {item.product.name}
+                          </h4>
+                          <span className="text-xs font-bold text-slate-500 block mt-0.5">
+                            {formatCurrency(item.product.price)} c/u
+                          </span>
+                        </div>
+                        {/* Quantity controls */}
+                        <div className="flex flex-col items-center gap-1.5">
+                          <button
+                            onClick={() => handleRemoveItem(item.product.id)}
+                            className="p-1 text-slate-400 hover:text-red-500 rounded-lg hover:bg-white transition-colors"
+                            title="Eliminar producto"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                          
+                          <div className="flex items-center gap-2 bg-white rounded-full border border-slate-200 px-2.5 py-1 shadow-sm">
+                            <button
+                              onClick={() => handleUpdateQuantity(item.product.id, -1)}
+                              className="text-xs font-extrabold text-slate-500 hover:text-slate-900 px-1"
+                            >
+                              -
+                            </button>
+                            <span className="text-xs font-extrabold text-slate-800">
+                              {item.quantity}
+                            </span>
+                            <button
+                              onClick={() => handleUpdateQuantity(item.product.id, 1)}
+                              className="text-xs font-extrabold text-slate-500 hover:text-slate-900 px-1"
+                            >
+                              +
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="text-center py-20">
+                      <div className="flex h-16 w-16 items-center justify-center rounded-full bg-slate-50 text-slate-300 mx-auto mb-4 border border-slate-100">
+                        🛒
+                      </div>
+                      <h3 className="text-sm font-bold text-slate-800">Tu carrito está vacío</h3>
+                      <p className="text-xs text-slate-400 mt-1 max-w-xs mx-auto">
+                        Los productos agregados aparecerán aquí para realizar el pedido. ¡Ayúdanos a salvar comida hoy!
+                      </p>
+                      <button
+                        onClick={() => setIsCartOpen(false)}
+                        className="mt-6 rounded-full bg-blue-600 text-white px-6 py-2.5 text-xs font-bold hover:bg-blue-700 shadow-md transition-colors"
+                      >
+                        Continuar Comprando
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                {/* Cart Footer */}
+                {cartItems.length > 0 && (
+                  <div className="border-t border-slate-100 p-6 bg-slate-50 rounded-t-3xl">
+                    <div className="flex items-center justify-between text-sm font-semibold text-slate-600 mb-2">
+                      <span>Subtotal Rescate:</span>
+                      <span className="text-base font-extrabold text-slate-900">
+                        {formatCurrency(cartSubtotal)}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2 mb-4 text-[10px] text-green-700 font-bold bg-green-50 px-3 py-2 rounded-xl">
+                      <ShieldAlert className="h-4 w-4 shrink-0" />
+                      <span>Al comprar en SADYA, ahorraste aproximadamente {formatCurrency(cartSubtotal * 0.4)} comparado al precio comercial.</span>
+                    </div>
+                    <button
+                      onClick={() => {
+                        showToast("¡Pedido simulado realizado con éxito! Gracias por tu impacto social.");
+                        setCartItems([]);
+                        setIsCartOpen(false);
+                      }}
+                      className="w-full rounded-2xl bg-blue-600 text-white py-3.5 text-xs font-black tracking-wider uppercase shadow-lg shadow-blue-200 hover:bg-blue-700 active:scale-95 transition-all duration-300 flex items-center justify-center gap-2"
+                    >
+                      🤝 Confirmar Pedido de Rescate
+                    </button>
+                  </div>
+                )}
+
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Toast Notification */}
+      {toast && (
+        <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2.5 bg-slate-900 text-white px-5 py-3 rounded-2xl shadow-xl transition-all duration-300 animate-slide-in border border-slate-800">
+          <CheckCircle className="h-5 w-5 text-green-500 shrink-0" />
+          <span className="text-xs font-bold tracking-tight">{toast}</span>
+        </div>
+      )}
+    </div>
+  );
+}
+
+export default App;
