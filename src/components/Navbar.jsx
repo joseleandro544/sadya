@@ -7,11 +7,14 @@ export default function Navbar({
   cartCount, 
   currentLocation, 
   setCurrentLocation,
-  onOpenCart
+  onOpenCart,
+  onOpenAuthModal,
+  onOpenMerchantRegister
 }) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isLocationModalOpen, setIsLocationModalOpen] = useState(false);
   const [tempLocation, setTempLocation] = useState(currentLocation);
+  const [isRegisterDropdownOpen, setIsRegisterDropdownOpen] = useState(false);
 
   const locations = [
     "📍 Calle 45 # 12-34, Bogotá",
@@ -122,6 +125,57 @@ export default function Navbar({
                 </span>
               </button>
 
+              {/* Registrar Dropdown */}
+              <div className="relative">
+                <button 
+                  onClick={() => setIsRegisterDropdownOpen(!isRegisterDropdownOpen)}
+                  className="bg-emerald-500 hover:bg-emerald-600 text-white font-extrabold px-4 py-2 rounded-xl text-xs shadow-md shadow-emerald-100/50 transition-all duration-200 active:scale-95 cursor-pointer"
+                >
+                  Registrar
+                </button>
+                
+                {isRegisterDropdownOpen && (
+                  <div className="absolute right-0 mt-2 w-48 rounded-2xl bg-white p-2 shadow-xl border border-slate-100 z-50 flex flex-col gap-1">
+                    <button 
+                      onClick={() => {
+                        setIsRegisterDropdownOpen(false);
+                        onOpenMerchantRegister();
+                      }}
+                      className="w-full text-left rounded-xl px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-blue-50/70 hover:text-blue-600 hover:scale-[1.04] active:scale-[0.98] transition-all duration-200 transform origin-left cursor-pointer"
+                    >
+                      Productor / campesino
+                    </button>
+                    <button 
+                      onClick={() => {
+                        setIsRegisterDropdownOpen(false);
+                        onOpenMerchantRegister();
+                      }}
+                      className="w-full text-left rounded-xl px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-blue-50/70 hover:text-blue-600 hover:scale-[1.04] active:scale-[0.98] transition-all duration-200 transform origin-left cursor-pointer"
+                    >
+                      Tienda
+                    </button>
+                    <button 
+                      onClick={() => {
+                        setIsRegisterDropdownOpen(false);
+                        alert("Registro de Domiciliario próximamente");
+                      }}
+                      className="w-full text-left rounded-xl px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-blue-50/70 hover:text-blue-600 hover:scale-[1.04] active:scale-[0.98] transition-all duration-200 transform origin-left cursor-pointer"
+                    >
+                      Domiciliario
+                    </button>
+                    <button 
+                      onClick={() => {
+                        setIsRegisterDropdownOpen(false);
+                        onOpenAuthModal('cliente');
+                      }}
+                      className="w-full text-left rounded-xl px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-blue-50/70 hover:text-blue-600 hover:scale-[1.04] active:scale-[0.98] transition-all duration-200 transform origin-left cursor-pointer"
+                    >
+                      Cliente
+                    </button>
+                  </div>
+                )}
+              </div>
+
               {/* Shopping Cart */}
               <button 
                 onClick={onOpenCart}
@@ -208,6 +262,15 @@ export default function Navbar({
               <a href="#" className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 hover:text-blue-600 transition-colors">
                 Ayuda y Soporte
               </a>
+              <button 
+                onClick={() => {
+                  setIsMobileMenuOpen(false);
+                  onOpenAuthModal('cliente');
+                }}
+                className="w-full flex items-center justify-center rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-extrabold py-2.5 text-xs tracking-wider uppercase shadow-md transition-colors cursor-pointer mt-4"
+              >
+                Registrar
+              </button>
             </nav>
 
             <div className="border-t border-slate-100 pt-4">

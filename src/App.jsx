@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import Navbar from './components/Navbar';
+import RegisterPage from './components/RegisterPage';
+import MerchantRegisterPage from './components/MerchantRegisterPage';
 import HeroMetrics from './components/HeroMetrics';
 import Categories from './components/Categories';
 import Promotions from './components/Promotions';
@@ -15,6 +17,7 @@ function App() {
   // Shopping Cart States
   const [cartItems, setCartItems] = useState([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState('home'); // 'home' or 'register'
   const [toast, setToast] = useState(null);
 
   // Add to cart handler
@@ -80,6 +83,36 @@ function App() {
     }).format(val).replace('COP', 'COP ');
   };
 
+  if (currentPage === 'register-merchant') {
+    return (
+      <div className="min-h-screen bg-[#f8fafc] text-slate-800 flex flex-col font-sans">
+        <MerchantRegisterPage onBack={() => setCurrentPage('home')} />
+        {/* Toast Notification */}
+        {toast && (
+          <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2.5 bg-slate-900 text-white px-5 py-3 rounded-2xl shadow-xl transition-all duration-300 animate-slide-in border border-slate-800">
+            <CheckCircle className="h-5 w-5 text-green-500 shrink-0" />
+            <span className="text-xs font-bold tracking-tight">{toast}</span>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  if (currentPage === 'register') {
+    return (
+      <div className="min-h-screen bg-[#f8fafc] text-slate-800 flex flex-col font-sans">
+        <RegisterPage onBack={() => setCurrentPage('home')} />
+        {/* Toast Notification */}
+        {toast && (
+          <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2.5 bg-slate-900 text-white px-5 py-3 rounded-2xl shadow-xl transition-all duration-300 animate-slide-in border border-slate-800">
+            <CheckCircle className="h-5 w-5 text-green-500 shrink-0" />
+            <span className="text-xs font-bold tracking-tight">{toast}</span>
+          </div>
+        )}
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-[#f8fafc] text-slate-800 flex flex-col font-sans">
       {/* 1. Header / Navbar */}
@@ -90,6 +123,8 @@ function App() {
         currentLocation={currentLocation}
         setCurrentLocation={setCurrentLocation}
         onOpenCart={() => setIsCartOpen(true)}
+        onOpenAuthModal={() => setCurrentPage('register')}
+        onOpenMerchantRegister={() => setCurrentPage('register-merchant')}
       />
 
       <main className="flex-grow">
