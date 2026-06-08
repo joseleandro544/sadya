@@ -12,7 +12,7 @@ function App() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [currentLocation, setCurrentLocation] = useState('📍 Calle 45 # 12-34, Bogotá');
-  const [userPreference, setUserPreference] = useState('none');
+  const [userPreferences, setUserPreferences] = useState([]);
   
   // Shopping Cart States
   const [cartItems, setCartItems] = useState([]);
@@ -148,8 +148,8 @@ function App() {
           selectedCategory={selectedCategory}
           setSelectedCategory={setSelectedCategory}
           onAddToCart={handleAddToCart}
-          userPreference={userPreference}
-          setUserPreference={setUserPreference}
+          userPreferences={userPreferences}
+          setUserPreferences={setUserPreferences}
         />
       </main>
 

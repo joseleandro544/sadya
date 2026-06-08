@@ -90,20 +90,23 @@ export default function Promotions({ onSelectPromoCategory }) {
 
       {/* Banner Container */}
       <div 
-        className="relative overflow-hidden rounded-3xl bg-slate-900 text-white shadow-xl aspect-[21/9] min-h-[220px] sm:min-h-[320px] group"
+        className="relative overflow-hidden bg-transparent aspect-[21/9] min-h-[220px] sm:min-h-[320px] group"
         onMouseEnter={stopAutoPlay}
         onMouseLeave={startAutoPlay}
       >
+        {/* Fade Out Overlays to blend with page background (#f8fafc) */}
+        <div className="absolute inset-y-0 left-0 w-12 sm:w-28 bg-gradient-to-r from-[#f8fafc] via-[#f8fafc]/60 to-transparent z-10 pointer-events-none" />
+        <div className="absolute inset-y-0 right-0 w-12 sm:w-28 bg-gradient-to-l from-[#f8fafc] via-[#f8fafc]/60 to-transparent z-10 pointer-events-none" />
+
         {/* Slides Track */}
         <div 
-          className="flex h-full transition-transform duration-700 ease-out"
-          style={{ transform: `translateX(-${currentSlide * 100}%)`, width: `${slides.length * 100}%` }}
+          className="flex h-full transition-transform duration-700 ease-out w-full"
+          style={{ transform: `translateX(-${currentSlide * 100}%)` }}
         >
           {slides.map((slide) => (
             <div 
               key={slide.id}
-              className={`w-full h-full flex flex-col justify-center px-8 sm:px-16 py-8 relative bg-gradient-to-r ${slide.gradient} select-none`}
-              style={{ width: `${100 / slides.length}%` }}
+              className={`w-full shrink-0 h-full flex flex-col justify-center px-12 sm:px-28 py-8 relative bg-gradient-to-r ${slide.gradient} select-none`}
             >
               {/* Floating Shape Elements for Premium Look */}
               <div className="absolute right-0 top-0 w-1/3 h-full bg-white/5 rounded-l-full blur-2xl transform translate-x-12 -translate-y-8" />
@@ -146,21 +149,21 @@ export default function Promotions({ onSelectPromoCategory }) {
         {/* Navigation Arrows */}
         <button
           onClick={handlePrev}
-          className="absolute left-4 top-1/2 -translate-y-1/2 flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-full bg-black/20 text-white backdrop-blur-sm opacity-0 group-hover:opacity-100 hover:bg-black/40 transition-all duration-300 border border-white/10"
+          className="absolute left-6 top-1/2 -translate-y-1/2 flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-full bg-black/20 text-white backdrop-blur-sm opacity-0 group-hover:opacity-100 hover:bg-black/40 transition-all duration-300 border border-white/10 z-20"
           title="Anterior"
         >
           <ChevronLeft className="h-5 w-5 sm:h-6 sm:w-6" />
         </button>
         <button
           onClick={handleNext}
-          className="absolute right-4 top-1/2 -translate-y-1/2 flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-full bg-black/20 text-white backdrop-blur-sm opacity-0 group-hover:opacity-100 hover:bg-black/40 transition-all duration-300 border border-white/10"
+          className="absolute right-6 top-1/2 -translate-y-1/2 flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-full bg-black/20 text-white backdrop-blur-sm opacity-0 group-hover:opacity-100 hover:bg-black/40 transition-all duration-300 border border-white/10 z-20"
           title="Siguiente"
         >
           <ChevronRight className="h-5 w-5 sm:h-6 sm:w-6" />
         </button>
 
         {/* Indicators Dots */}
-        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
+        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-20">
           {slides.map((_, index) => (
             <button
               key={index}

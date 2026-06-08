@@ -140,8 +140,8 @@ export default function ProductGrid({
   selectedCategory, 
   setSelectedCategory,
   onAddToCart,
-  userPreference,
-  setUserPreference
+  userPreferences = [],
+  setUserPreferences
 }) {
   
   // Simulated interest triggers
@@ -172,12 +172,12 @@ export default function ProductGrid({
       );
     }
 
-    // 3. Dynamic Sorting based on Simulated User Preference
-    // Rule: If userPreference matches product's categoryKey, we give it extreme sorting weight.
+    // 3. Dynamic Sorting based on Simulated User Preferences (Multiple allowed)
+    // Rule: If product's categoryKey matches any of the active userPreferences, we give it sorting weight.
     // Within that, or for others, we sort by distance (closest first).
     list.sort((a, b) => {
-      const aIsPreferred = userPreference !== 'none' && a.categoryKey === userPreference;
-      const bIsPreferred = userPreference !== 'none' && b.categoryKey === userPreference;
+      const aIsPreferred = userPreferences.includes(a.categoryKey);
+      const bIsPreferred = userPreferences.includes(b.categoryKey);
 
       if (aIsPreferred && !bIsPreferred) return -1;
       if (!aIsPreferred && bIsPreferred) return 1;
@@ -187,7 +187,7 @@ export default function ProductGrid({
     });
 
     return list;
-  }, [searchQuery, selectedCategory, userPreference]);
+  }, [searchQuery, selectedCategory, userPreferences]);
 
   return (
     <section id="productos" className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8 bg-slate-50/50 border-t border-b border-slate-100">
@@ -226,12 +226,27 @@ export default function ProductGrid({
         </p>
         <div className="flex flex-wrap gap-2">
           {interestOptions.map((opt) => {
-            const isActive = userPreference === opt.id;
+            const isActive = opt.id === 'none' 
+              ? userPreferences.length === 0 
+              : userPreferences.includes(opt.id);
+
+            const handleToggle = () => {
+              if (opt.id === 'none') {
+                setUserPreferences([]);
+              } else {
+                if (userPreferences.includes(opt.id)) {
+                  setUserPreferences(userPreferences.filter(id => id !== opt.id));
+                } else {
+                  setUserPreferences([...userPreferences, opt.id]);
+                }
+              }
+            };
+
             return (
               <button
                 key={opt.id}
-                onClick={() => setUserPreference(opt.id)}
-                className={`rounded-full px-4 py-2 text-xs font-bold transition-all duration-200 ${
+                onClick={handleToggle}
+                className={`rounded-full px-4 py-2 text-xs font-bold transition-all duration-200 cursor-pointer ${
                   isActive
                     ? 'bg-blue-600 text-white shadow-md shadow-blue-100 scale-105'
                     : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200/60'
@@ -265,7 +280,7 @@ export default function ProductGrid({
           <button
             onClick={() => {
               setSelectedCategory('all');
-              setUserPreference('none');
+              setUserPreferences([]);
             }}
             className="mt-4 rounded-full bg-blue-600 text-white px-6 py-2 text-xs font-bold hover:bg-blue-700 shadow transition-colors"
           >

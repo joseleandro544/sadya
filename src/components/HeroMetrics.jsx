@@ -34,13 +34,10 @@ export default function HeroMetrics() {
   return (
     <section className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8 text-center">
       {/* Title */}
-      <div className="max-w-4xl mx-auto mb-10">
-        <h1 className="text-3xl font-normal text-slate-900 leading-tight sm:text-4xl md:text-5xl tracking-tight">
-          ¡Ayúdanos a <strong className="font-extrabold text-blue-600">asegurar la alimentación</strong> de las poblaciones más vulnerables, <strong className="font-extrabold text-green-600">prevenir el desperdicio</strong> de alimentos y <strong className="font-extrabold text-amber-500">ahorrar tu dinero</strong>!
+      <div className="max-w-5xl mx-auto mb-10">
+        <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-[32px] font-normal text-slate-900 leading-relaxed tracking-tight">
+          ¡Ayúdanos a <strong className="font-extrabold text-blue-600">asegurar la alimentación</strong> de las poblaciones más vulnerables,<br className="hidden md:inline" /> <strong className="font-extrabold text-green-600">prevenir el desperdicio</strong> de alimentos y <strong className="font-extrabold text-amber-500">ahorrar tu dinero</strong>!
         </h1>
-        <p className="mt-4 text-sm sm:text-base text-slate-500 max-w-2xl mx-auto">
-          En SADYA conectamos excedentes de comida de calidad con hogares que los necesitan, generando un impacto económico y ambiental positivo.
-        </p>
       </div>
 
       {/* Metric Cards Grid */}
