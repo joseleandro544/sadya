@@ -9,7 +9,10 @@ export default function Navbar({
   setCurrentLocation,
   onOpenCart,
   onOpenAuthModal,
-  onOpenMerchantRegister
+  onOpenFarmerRegister,
+  onOpenStoreRegister,
+  onOpenDelivererRegister,
+  onOpenFoundationRegister
 }) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isLocationModalOpen, setIsLocationModalOpen] = useState(false);
@@ -135,20 +138,20 @@ export default function Navbar({
                 </button>
                 
                 {isRegisterDropdownOpen && (
-                  <div className="absolute right-0 mt-2 w-48 rounded-2xl bg-white p-2 shadow-xl border border-slate-100 z-50 flex flex-col gap-1">
+                  <div className="absolute right-0 mt-2 w-52 rounded-2xl bg-white p-2 shadow-xl border border-slate-100 z-50 flex flex-col gap-1">
                     <button 
                       onClick={() => {
                         setIsRegisterDropdownOpen(false);
-                        onOpenMerchantRegister();
+                        onOpenFarmerRegister();
                       }}
                       className="w-full text-left rounded-xl px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-blue-50/70 hover:text-blue-600 hover:scale-[1.04] active:scale-[0.98] transition-all duration-200 transform origin-left cursor-pointer"
                     >
-                      Productor / campesino
+                      Productor / Campesino
                     </button>
                     <button 
                       onClick={() => {
                         setIsRegisterDropdownOpen(false);
-                        onOpenMerchantRegister();
+                        onOpenStoreRegister();
                       }}
                       className="w-full text-left rounded-xl px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-blue-50/70 hover:text-blue-600 hover:scale-[1.04] active:scale-[0.98] transition-all duration-200 transform origin-left cursor-pointer"
                     >
@@ -157,11 +160,20 @@ export default function Navbar({
                     <button 
                       onClick={() => {
                         setIsRegisterDropdownOpen(false);
-                        alert("Registro de Domiciliario próximamente");
+                        onOpenDelivererRegister();
                       }}
                       className="w-full text-left rounded-xl px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-blue-50/70 hover:text-blue-600 hover:scale-[1.04] active:scale-[0.98] transition-all duration-200 transform origin-left cursor-pointer"
                     >
-                      Domiciliario
+                      Domiciliario / Transportador
+                    </button>
+                    <button 
+                      onClick={() => {
+                        setIsRegisterDropdownOpen(false);
+                        onOpenFoundationRegister();
+                      }}
+                      className="w-full text-left rounded-xl px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-blue-50/70 hover:text-blue-600 hover:scale-[1.04] active:scale-[0.98] transition-all duration-200 transform origin-left cursor-pointer"
+                    >
+                      Fundación
                     </button>
                     <button 
                       onClick={() => {

@@ -1,0 +1,190 @@
+import { useState } from 'react';
+import { ArrowLeft, MapPin, User, Phone, CheckCircle } from 'lucide-react';
+
+export default function FarmerRegisterPage({ onBack }) {
+  const [form, setForm] = useState({
+    nombreCompleto: '',
+    direccion: '',
+    telefono: ''
+  });
+  
+  const [errors, setErrors] = useState({
+    nombreCompleto: false
+  });
+
+  const [submitted, setSubmitted] = useState(false);
+
+  const handleChange = (field) => (e) => {
+    const value = e.target.value;
+    setForm((prev) => ({ ...prev, [field]: value }));
+    
+    if (field === 'nombreCompleto') {
+      setErrors((prev) => ({ ...prev, nombreCompleto: value.trim() === '' }));
+    }
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (form.nombreCompleto.trim() === '') {
+      setErrors((prev) => ({ ...prev, nombreCompleto: true }));
+      return;
+    }
+    if (form.telefono.trim() === '') {
+      alert('El teléfono es obligatorio.');
+      return;
+    }
+    setSubmitted(true);
+  };
+
+  if (submitted) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-amber-50/50 flex flex-col items-center justify-center p-6 text-center">
+        <div className="flex h-20 w-20 items-center justify-center rounded-full bg-emerald-100 mb-6 shadow-inner animate-bounce">
+          <CheckCircle className="h-10 w-10 text-emerald-600" />
+        </div>
+        <h2 className="text-3xl font-black text-slate-900 mb-2">¡Registro completado, Productor!</h2>
+        <p className="text-slate-500 text-sm max-w-md mb-8 leading-relaxed">
+          Hemos guardado tu información. Bienvenido a la comunidad de productores de <strong>SADYA</strong>. 
+          Pronto nos comunicaremos contigo al teléfono ingresado para ayudarte a subir tus primeros productos de la finca.
+        </p>
+        <button
+          onClick={onBack}
+          className="rounded-full bg-blue-600 text-white px-8 py-3 text-sm font-extrabold shadow-lg shadow-blue-200 hover:bg-blue-700 transition-all duration-200 active:scale-95 cursor-pointer"
+        >
+          Volver al Marketplace
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-slate-50 font-sans flex flex-col">
+      {/* ── Page Header ── */}
+      <div className="sticky top-0 z-20 bg-white/90 backdrop-blur-md border-b border-slate-100 px-4 sm:px-8 py-4 flex items-center gap-4">
+        <button
+          onClick={onBack}
+          className="flex items-center gap-2 text-slate-600 hover:text-slate-900 text-sm font-semibold transition-colors cursor-pointer"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Volver
+        </button>
+        <div className="h-4 w-px bg-slate-200" />
+        <div className="flex items-center gap-2">
+          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-600 text-white font-black text-xs shadow">S</div>
+          <span className="font-extrabold text-slate-900 text-sm">
+            SADYA · <span className="text-amber-500">Únete Campesino / Productor</span>
+          </span>
+        </div>
+      </div>
+
+      {/* ── Card Area ── */}
+      <div className="flex-1 flex items-center justify-center p-4 sm:p-8">
+        <div className="w-full max-w-md bg-white rounded-3xl shadow-xl border border-slate-100 p-6 sm:p-8 transition-all">
+          
+          {/* Header Card */}
+          <div className="mb-6 text-center sm:text-left">
+            <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+              Únete campesino / productor
+            </h1>
+            <p className="mt-2 text-sm text-slate-500">
+              ¿Ya tienes una cuenta?{' '}
+              <button
+                type="button"
+                onClick={() => alert('Inicio de sesión próximamente')}
+                className="text-blue-600 font-bold hover:underline"
+              >
+                Haz clic aquí
+              </button>
+            </p>
+          </div>
+
+          <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+            {/* Nombre Completo */}
+            <div className="flex flex-col gap-1.5">
+              <label htmlFor="nombreCompleto" className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+                Nombre Completo
+              </label>
+              <div className="relative">
+                <User className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
+                <input
+                  id="nombreCompleto"
+                  type="text"
+                  placeholder="Ej: Pedro José Gómez"
+                  value={form.nombreCompleto}
+                  onChange={handleChange('nombreCompleto')}
+                  className={`h-12 w-full rounded-xl border bg-white pl-11 pr-4 text-sm text-slate-800 placeholder-slate-400 outline-none transition-all focus:ring-4 focus:ring-blue-100/60 ${
+                    errors.nombreCompleto ? 'border-red-500 focus:border-red-500 focus:ring-red-100/50' : 'border-slate-200 focus:border-blue-500'
+                  }`}
+                />
+              </div>
+              {errors.nombreCompleto && (
+                <span className="text-[10px] font-bold text-red-500 tracking-wide">
+                  No puede quedar vacío
+                </span>
+              )}
+            </div>
+
+            {/* Dirección */}
+            <div className="flex flex-col gap-1.5">
+              <label htmlFor="direccion" className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+                Dirección
+              </label>
+              <div className="relative">
+                <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
+                <input
+                  id="direccion"
+                  type="text"
+                  required
+                  placeholder="Dirección de la finca"
+                  value={form.direccion}
+                  onChange={handleChange('direccion')}
+                  className="h-12 w-full rounded-xl border border-slate-200 bg-white pl-11 pr-4 text-sm text-slate-800 placeholder-slate-400 outline-none transition-all focus:border-blue-500 focus:ring-4 focus:ring-blue-100/60"
+                />
+              </div>
+            </div>
+
+            {/* Teléfono */}
+            <div className="flex flex-col gap-1.5">
+              <label htmlFor="telefono" className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+                Teléfono
+              </label>
+              <div className="flex rounded-xl border border-slate-200 bg-white overflow-hidden focus-within:border-blue-500 focus-within:ring-4 focus-within:ring-blue-100/60 transition-all">
+                <div className="h-12 px-4 bg-slate-100 border-r border-slate-200 flex items-center justify-center font-bold text-slate-500 text-sm select-none">
+                  +57
+                </div>
+                <input
+                  id="telefono"
+                  type="tel"
+                  required
+                  placeholder="310 123 4567"
+                  value={form.telefono}
+                  onChange={handleChange('telefono')}
+                  className="h-12 flex-grow bg-white px-4 text-sm text-slate-800 placeholder-slate-400 outline-none"
+                />
+              </div>
+            </div>
+
+            {/* Términos y Botón */}
+            <div className="flex flex-col gap-4 mt-2">
+              <p className="text-[11px] text-slate-500 leading-relaxed text-center sm:text-left">
+                Al hacer clic en registrarme, declaras que aceptas los{' '}
+                <a href="#" className="text-blue-600 font-bold hover:underline">Términos y Condiciones</a>{' '}
+                y las{' '}
+                <a href="#" className="text-blue-600 font-bold hover:underline">Políticas de Privacidad</a>{' '}
+                de la plataforma SADYA.
+              </p>
+              
+              <button
+                type="submit"
+                className="h-12 w-full bg-amber-500 hover:bg-amber-600 text-white font-extrabold rounded-xl shadow-lg shadow-amber-100 active:scale-[0.98] transition-all duration-200 uppercase tracking-wider text-xs cursor-pointer flex items-center justify-center"
+              >
+                Registrarme
+              </button>
+            </div>
+          </form>
+
+        </div>
+      </div>
+    </div>
+  );
+}

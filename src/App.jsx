@@ -1,7 +1,10 @@
 import { useState } from 'react';
 import Navbar from './components/Navbar';
 import RegisterPage from './components/RegisterPage';
-import MerchantRegisterPage from './components/MerchantRegisterPage';
+import FarmerRegisterPage from './components/FarmerRegisterPage';
+import StoreRegisterPage from './components/StoreRegisterPage';
+import FoundationRegisterPage from './components/FoundationRegisterPage';
+import DelivererRegisterPage from './components/DelivererRegisterPage';
 import HeroMetrics from './components/HeroMetrics';
 import Categories from './components/Categories';
 import Promotions from './components/Promotions';
@@ -83,10 +86,55 @@ function App() {
     }).format(val).replace('COP', 'COP ');
   };
 
-  if (currentPage === 'register-merchant') {
+  if (currentPage === 'register-farmer') {
     return (
       <div className="min-h-screen bg-[#f8fafc] text-slate-800 flex flex-col font-sans">
-        <MerchantRegisterPage onBack={() => setCurrentPage('home')} />
+        <FarmerRegisterPage onBack={() => setCurrentPage('home')} />
+        {/* Toast Notification */}
+        {toast && (
+          <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2.5 bg-slate-900 text-white px-5 py-3 rounded-2xl shadow-xl transition-all duration-300 animate-slide-in border border-slate-800">
+            <CheckCircle className="h-5 w-5 text-green-500 shrink-0" />
+            <span className="text-xs font-bold tracking-tight">{toast}</span>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  if (currentPage === 'register-store') {
+    return (
+      <div className="min-h-screen bg-[#f8fafc] text-slate-800 flex flex-col font-sans">
+        <StoreRegisterPage onBack={() => setCurrentPage('home')} />
+        {/* Toast Notification */}
+        {toast && (
+          <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2.5 bg-slate-900 text-white px-5 py-3 rounded-2xl shadow-xl transition-all duration-300 animate-slide-in border border-slate-800">
+            <CheckCircle className="h-5 w-5 text-green-500 shrink-0" />
+            <span className="text-xs font-bold tracking-tight">{toast}</span>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  if (currentPage === 'register-foundation') {
+    return (
+      <div className="min-h-screen bg-[#f8fafc] text-slate-800 flex flex-col font-sans">
+        <FoundationRegisterPage onBack={() => setCurrentPage('home')} />
+        {/* Toast Notification */}
+        {toast && (
+          <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2.5 bg-slate-900 text-white px-5 py-3 rounded-2xl shadow-xl transition-all duration-300 animate-slide-in border border-slate-800">
+            <CheckCircle className="h-5 w-5 text-green-500 shrink-0" />
+            <span className="text-xs font-bold tracking-tight">{toast}</span>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  if (currentPage === 'register-deliverer') {
+    return (
+      <div className="min-h-screen bg-[#f8fafc] text-slate-800 flex flex-col font-sans">
+        <DelivererRegisterPage onBack={() => setCurrentPage('home')} />
         {/* Toast Notification */}
         {toast && (
           <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2.5 bg-slate-900 text-white px-5 py-3 rounded-2xl shadow-xl transition-all duration-300 animate-slide-in border border-slate-800">
@@ -124,7 +172,10 @@ function App() {
         setCurrentLocation={setCurrentLocation}
         onOpenCart={() => setIsCartOpen(true)}
         onOpenAuthModal={() => setCurrentPage('register')}
-        onOpenMerchantRegister={() => setCurrentPage('register-merchant')}
+        onOpenFarmerRegister={() => setCurrentPage('register-farmer')}
+        onOpenStoreRegister={() => setCurrentPage('register-store')}
+        onOpenDelivererRegister={() => setCurrentPage('register-deliverer')}
+        onOpenFoundationRegister={() => setCurrentPage('register-foundation')}
       />
 
       <main className="flex-grow">
