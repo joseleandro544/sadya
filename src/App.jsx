@@ -9,6 +9,8 @@ import HeroMetrics from './components/HeroMetrics';
 import Categories from './components/Categories';
 import Promotions from './components/Promotions';
 import ProductGrid from './components/ProductGrid';
+import FamilySection from './components/FamilySection';
+import LoginPage from './components/LoginPage';
 import { X, Trash2, ShieldAlert, HeartHandshake, CheckCircle } from 'lucide-react';
 
 function App() {
@@ -161,6 +163,28 @@ function App() {
     );
   }
 
+  if (currentPage === 'login') {
+    return (
+      <div className="min-h-screen bg-[#f8fafc] text-slate-800 flex flex-col font-sans">
+        <LoginPage 
+          onBack={() => setCurrentPage('home')} 
+          onOpenRegister={() => setCurrentPage('register')}
+          onLoginSuccess={(message) => {
+            showToast(message);
+            setCurrentPage('home');
+          }}
+        />
+        {/* Toast Notification */}
+        {toast && (
+          <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2.5 bg-slate-900 text-white px-5 py-3 rounded-2xl shadow-xl transition-all duration-300 animate-slide-in border border-slate-800">
+            <CheckCircle className="h-5 w-5 text-green-500 shrink-0" />
+            <span className="text-xs font-bold tracking-tight">{toast}</span>
+          </div>
+        )}
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-[#f8fafc] text-slate-800 flex flex-col font-sans">
       {/* 1. Header / Navbar */}
@@ -172,6 +196,7 @@ function App() {
         setCurrentLocation={setCurrentLocation}
         onOpenCart={() => setIsCartOpen(true)}
         onOpenAuthModal={() => setCurrentPage('register')}
+        onOpenLogin={() => setCurrentPage('login')}
         onOpenFarmerRegister={() => setCurrentPage('register-farmer')}
         onOpenStoreRegister={() => setCurrentPage('register-store')}
         onOpenDelivererRegister={() => setCurrentPage('register-deliverer')}
@@ -202,6 +227,9 @@ function App() {
           userPreferences={userPreferences}
           setUserPreferences={setUserPreferences}
         />
+
+        {/* 6. Haz parte de nuestra familia SADYA */}
+        <FamilySection />
       </main>
 
       {/* Footer */}
