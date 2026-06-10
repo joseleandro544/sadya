@@ -1,19 +1,28 @@
 import { useRef } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import glowingStar from '../assets/categorias/Glowing star.svg';
+import redApple from '../assets/categorias/Red apple.svg';
+import broccoli from '../assets/categorias/Broccoli.svg';
+import sheafOfRice from '../assets/categorias/Sheaf of rice.svg';
+import cutOfMeat from '../assets/categorias/Cut of meat.svg';
+import glassOfMilk from '../assets/categorias/Glass of milk.svg';
+import bread from '../assets/categorias/Bread.svg';
+import shortcake from '../assets/categorias/Shortcake.svg';
+import hamburger from '../assets/categorias/Hamburger.svg';
 
 export default function Categories({ selectedCategory, setSelectedCategory }) {
   const scrollContainerRef = useRef(null);
 
   const categories = [
-    { id: 'all', name: 'Todos', emoji: '🌟', bgColor: 'bg-slate-100 hover:bg-slate-200 text-slate-700' },
-    { id: 'frutas', name: 'Frutas', emoji: '🍎', bgColor: 'bg-red-50 hover:bg-red-100 text-red-700' },
-    { id: 'verduras', name: 'Verduras', emoji: '🥦', bgColor: 'bg-green-50 hover:bg-green-100 text-green-700' },
-    { id: 'granos', name: 'Granos', emoji: '🌾', bgColor: 'bg-amber-50 hover:bg-amber-100 text-amber-700' },
-    { id: 'carnes', name: 'Carnicerías', emoji: '🥩', bgColor: 'bg-rose-50 hover:bg-rose-100 text-rose-700' },
-    { id: 'lacteos', name: 'Lácteos', emoji: '🥛', bgColor: 'bg-sky-50 hover:bg-sky-100 text-sky-700' },
-    { id: 'panaderia', name: 'Panaderías', emoji: '🍞', bgColor: 'bg-yellow-50 hover:bg-yellow-100 text-yellow-700' },
-    { id: 'postres', name: 'Postres', emoji: '🍰', bgColor: 'bg-pink-50 hover:bg-pink-100 text-pink-700' },
-    { id: 'rapida', name: 'Comidas Rápidas', emoji: '🍔', bgColor: 'bg-orange-50 hover:bg-orange-100 text-orange-700' },
+    { id: 'all', name: 'Todos', icon: glowingStar, bgColor: 'bg-slate-100 hover:bg-slate-200 text-slate-700' },
+    { id: 'frutas', name: 'Frutas', icon: redApple, bgColor: 'bg-red-50 hover:bg-red-100 text-red-700' },
+    { id: 'verduras', name: 'Verduras', icon: broccoli, bgColor: 'bg-green-50 hover:bg-green-100 text-green-700' },
+    { id: 'granos', name: 'Granos', icon: sheafOfRice, bgColor: 'bg-amber-50 hover:bg-amber-100 text-amber-700' },
+    { id: 'carnes', name: 'Carnicerías', icon: cutOfMeat, bgColor: 'bg-rose-50 hover:bg-rose-100 text-rose-700' },
+    { id: 'lacteos', name: 'Lácteos', icon: glassOfMilk, bgColor: 'bg-sky-50 hover:bg-sky-100 text-sky-700' },
+    { id: 'panaderia', name: 'Panaderías', icon: bread, bgColor: 'bg-yellow-50 hover:bg-yellow-100 text-yellow-700' },
+    { id: 'postres', name: 'Postres', icon: shortcake, bgColor: 'bg-pink-50 hover:bg-pink-100 text-pink-700' },
+    { id: 'rapida', name: 'Comidas Rápidas', icon: hamburger, bgColor: 'bg-orange-50 hover:bg-orange-100 text-orange-700' },
   ];
 
   const scroll = (direction) => {
@@ -79,11 +88,11 @@ export default function Categories({ selectedCategory, setSelectedCategory }) {
                   : 'border-slate-100 bg-white hover:border-slate-200 hover:-translate-y-1 shadow-sm'
               }`}
             >
-              {/* Emoji Circle */}
-              <div className={`flex h-14 w-14 items-center justify-center rounded-2xl text-3xl mb-3 shadow-inner ${
+              {/* Emoji Circle / SVG Icon */}
+              <div className={`flex h-14 w-14 items-center justify-center rounded-2xl mb-3 shadow-inner p-2.5 ${
                 isSelected ? 'bg-white shadow' : cat.bgColor
               } transition-transform duration-200 group-hover:scale-105`}>
-                {cat.emoji}
+                <img src={cat.icon} alt={cat.name} className="h-full w-full object-contain" />
               </div>
 
               {/* Text */}
