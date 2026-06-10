@@ -9,6 +9,7 @@ export default function Navbar({
   setCurrentLocation,
   onOpenCart,
   onOpenAuthModal,
+  onOpenLogin,
   onOpenFarmerRegister,
   onOpenStoreRegister,
   onOpenDelivererRegister,
@@ -119,7 +120,10 @@ export default function Navbar({
               </button>
 
               {/* My Account */}
-              <button className="group flex flex-col items-center justify-center text-slate-600 hover:text-blue-600 transition-colors duration-200">
+              <button 
+                onClick={onOpenLogin}
+                className="group flex flex-col items-center justify-center text-slate-600 hover:text-blue-600 transition-colors duration-200 cursor-pointer"
+              >
                 <div className="p-1">
                   <User className="h-5 w-5 transition-transform group-hover:scale-110" />
                 </div>
@@ -277,9 +281,18 @@ export default function Navbar({
               <button 
                 onClick={() => {
                   setIsMobileMenuOpen(false);
+                  onOpenLogin();
+                }}
+                className="w-full flex items-center justify-center rounded-xl border border-slate-200 text-slate-700 font-extrabold py-2.5 text-xs tracking-wider uppercase shadow-sm transition-colors cursor-pointer mt-4"
+              >
+                Iniciar Sesión
+              </button>
+              <button 
+                onClick={() => {
+                  setIsMobileMenuOpen(false);
                   onOpenAuthModal('cliente');
                 }}
-                className="w-full flex items-center justify-center rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-extrabold py-2.5 text-xs tracking-wider uppercase shadow-md transition-colors cursor-pointer mt-4"
+                className="w-full flex items-center justify-center rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-extrabold py-2.5 text-xs tracking-wider uppercase shadow-md transition-colors cursor-pointer mt-2"
               >
                 Registrar
               </button>
