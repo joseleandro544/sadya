@@ -61,21 +61,52 @@ export default function RegisterPage({ onBack }) {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [apiError, setApiError] = useState('');
 
   const set = (field) => (e) =>
     setForm((prev) => ({ ...prev, [field]: e.target.type === 'checkbox' ? e.target.checked : e.target.value }));
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setApiError('');
     if (form.password !== form.confirmPassword) {
       alert('Las contraseñas no coinciden.');
+      return;
+    }
+    if (form.password.length < 8) {
+      alert('La contraseña debe tener mínimo 8 caracteres.');
       return;
     }
     if (!form.terminos) {
       alert('Debes aceptar los Términos y Condiciones.');
       return;
     }
-    setSubmitted(true);
+    setLoading(true);
+    try {
+      const res = await fetch('/api/register/client', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          nombres: form.nombre,
+          apellidos: form.apellido,
+          email: form.email,
+          telefono: form.celular,
+          password: form.password,
+          genero: form.genero,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setApiError(data.message || 'Error al registrar.');
+        setLoading(false);
+        return;
+      }
+      setSubmitted(true);
+    } catch (err) {
+      setApiError('No se pudo conectar con el servidor.');
+      setLoading(false);
+    }
   };
 
   /* ── Success State ── */
@@ -255,12 +286,22 @@ export default function RegisterPage({ onBack }) {
               </span>
             </label>
 
+            {/* Error de API */}
+            {apiError && (
+              <div className="flex items-center gap-2 bg-red-50 border border-red-100 text-red-600 rounded-xl p-3 text-xs font-semibold">
+                <span>⚠️</span><span>{apiError}</span>
+              </div>
+            )}
+
             {/* Submit */}
             <button
               type="submit"
-              className="w-full mt-2 rounded-2xl bg-blue-600 py-4 text-sm font-black text-white tracking-wider uppercase shadow-lg shadow-blue-200 hover:bg-blue-700 active:scale-[0.98] transition-all duration-200"
+              disabled={loading}
+              className="w-full mt-2 rounded-2xl bg-blue-600 py-4 text-sm font-black text-white tracking-wider uppercase shadow-lg shadow-blue-200 hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed active:scale-[0.98] transition-all duration-200 flex items-center justify-center gap-2"
             >
-              🚀 Crear mi cuenta
+              {loading ? (
+                <><svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>Registrando...</>
+              ) : '🚀 Crear mi cuenta'}
             </button>
 
             {/* Ya tengo cuenta */}

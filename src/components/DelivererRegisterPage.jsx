@@ -20,7 +20,9 @@ export default function DelivererRegisterPage({ onBack }) {
     ciudad: '',
     whatsapp: '',
     password: '',
-    vehiculo: ''
+    vehiculo: '',
+    noDocumento: '',
+    direccion: ''
   });
 
   const [acceptTerms, setAcceptTerms] = useState(false);
@@ -36,6 +38,8 @@ export default function DelivererRegisterPage({ onBack }) {
   const [cedulaUploaded, setCedulaUploaded] = useState(false);
   const [selfieUploaded, setSelfieUploaded] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [apiError, setApiError] = useState('');
 
   const handleChange = (field) => (e) => {
     setForm((prev) => ({ ...prev, [field]: e.target.value }));
@@ -68,6 +72,14 @@ export default function DelivererRegisterPage({ onBack }) {
       alert('Por favor selecciona tu ciudad.');
       return;
     }
+    if (!form.noDocumento || !form.noDocumento.trim()) {
+      alert('Por favor ingresa tu número de documento.');
+      return;
+    }
+    if (!form.direccion || !form.direccion.trim()) {
+      alert('Por favor ingresa tu dirección de residencia.');
+      return;
+    }
     if (!form.vehiculo) {
       alert('Por favor selecciona tu tipo de vehículo.');
       return;
@@ -91,14 +103,41 @@ export default function DelivererRegisterPage({ onBack }) {
     setKycStep(2);
   };
 
-  const handleFinalSubmit = () => {
+  const handleFinalSubmit = async () => {
     if (!cedulaUploaded || !selfieUploaded) {
       alert('Por favor sube ambos archivos requeridos para continuar.');
       return;
     }
-    // Close KYC modal and show final success state
-    setIsKycOpen(false);
-    setSubmitted(true);
+    setLoading(true);
+    setApiError('');
+    try {
+      const res = await fetch('/api/register/deliverer', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          nombre: form.nombre,
+          apellido: form.apellido,
+          email: form.email,
+          ciudad: form.ciudad,
+          whatsapp: form.whatsapp,
+          password: form.password,
+          vehiculo: form.vehiculo,
+          noDocumento: form.noDocumento,
+          direccion: form.direccion,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setApiError(data.message || 'Error al registrar.');
+        setLoading(false);
+        return;
+      }
+      setIsKycOpen(false);
+      setSubmitted(true);
+    } catch (err) {
+      setApiError('No se pudo conectar con el servidor.');
+      setLoading(false);
+    }
   };
 
   if (submitted) {
@@ -146,19 +185,17 @@ export default function DelivererRegisterPage({ onBack }) {
       <div className="flex-grow flex items-center justify-center p-4 sm:p-8 md:p-12 lg:py-16">
         <div className="w-full max-w-2xl bg-white rounded-3xl shadow-xl border border-slate-100 overflow-hidden transition-all">
           
-          {/* Eye-catching Onboarding Header */}
-          <div className="bg-gradient-to-br from-rose-500 to-pink-600 px-6 py-10 text-white text-center relative overflow-hidden">
-            {/* Dot pattern background */}
-            <div className="absolute inset-0 opacity-15 bg-[radial-gradient(#ffffff_1.5px,transparent_1.5px)] [background-size:16px_16px]" />
-            <h1 className="text-2xl sm:text-3xl font-black tracking-tight relative z-10">
+          {/* Header */}
+          <div className="p-6 sm:p-10 pb-0">
+            <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight text-center sm:text-left">
               Únete como Domiciliario / Transportador
             </h1>
-            <p className="mt-2 text-xs text-rose-100 max-w-sm mx-auto relative z-10">
+            <p className="mt-2 text-sm text-slate-500 text-center sm:text-left">
               Genera ingresos rescatando alimentos de calidad y entregándolos cerca de ti.
             </p>
           </div>
 
-          <form onSubmit={handleRegisterClick} className="p-6 sm:p-10 flex flex-col gap-6">
+          <form onSubmit={handleRegisterClick} className="p-6 sm:p-10 pt-6 flex flex-col gap-6">
             
             {/* Grid 2 Columns */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -281,6 +318,38 @@ export default function DelivererRegisterPage({ onBack }) {
                     {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
                 </div>
+              </div>
+
+              {/* Fila 4: Número de Documento / Cédula */}
+              <div className="flex flex-col gap-1.5">
+                <label htmlFor="noDocumento" className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+                  Número de Cédula / Identificación
+                </label>
+                <input
+                  id="noDocumento"
+                  type="text"
+                  required
+                  placeholder="Ej: 10203040"
+                  value={form.noDocumento}
+                  onChange={handleChange('noDocumento')}
+                  className="h-12 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm text-slate-800 placeholder-slate-400 outline-none transition-all focus:border-blue-500 focus:ring-4 focus:ring-blue-100/60"
+                />
+              </div>
+
+              {/* Fila 4: Dirección de Residencia */}
+              <div className="flex flex-col gap-1.5">
+                <label htmlFor="direccion" className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+                  Dirección de Residencia
+                </label>
+                <input
+                  id="direccion"
+                  type="text"
+                  required
+                  placeholder="Ej: Calle 10 # 5-60"
+                  value={form.direccion}
+                  onChange={handleChange('direccion')}
+                  className="h-12 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm text-slate-800 placeholder-slate-400 outline-none transition-all focus:border-blue-500 focus:ring-4 focus:ring-blue-100/60"
+                />
               </div>
 
               {/* Fila 4: Tipo de Vehículo */}
@@ -469,12 +538,22 @@ export default function DelivererRegisterPage({ onBack }) {
 
                 </div>
 
+                {/* Error de API */}
+                {apiError && (
+                  <div className="flex items-center gap-2 bg-red-50 border border-red-100 text-red-600 rounded-xl p-3 text-xs font-semibold">
+                    <span>⚠️</span><span>{apiError}</span>
+                  </div>
+                )}
+
                 {/* Final Submit Button */}
                 <button
                   onClick={handleFinalSubmit}
-                  className="h-12 w-full bg-blue-600 hover:bg-blue-700 text-white font-extrabold rounded-xl shadow-lg transition-colors text-xs tracking-wider uppercase cursor-pointer"
+                  disabled={loading}
+                  className="h-12 w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed text-white font-extrabold rounded-xl shadow-lg transition-colors text-xs tracking-wider uppercase cursor-pointer flex items-center justify-center gap-2"
                 >
-                  Enviar a verificación
+                  {loading ? (
+                    <><svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>Registrando...</>
+                  ) : 'Enviar a verificación'}
                 </button>
               </div>
             )}

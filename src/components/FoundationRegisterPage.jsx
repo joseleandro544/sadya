@@ -1,5 +1,16 @@
 import { useState } from 'react';
-import { ArrowLeft, Eye, EyeOff, Lock, Mail, Phone, User, Heart, CheckCircle } from 'lucide-react';
+import { ArrowLeft, Eye, EyeOff, Lock, Mail, Phone, User, Heart, CheckCircle, MapPin } from 'lucide-react';
+
+const CITIES = [
+  "Bogotá D.C.",
+  "Medellín",
+  "Cali",
+  "Barranquilla",
+  "Bucaramanga",
+  "Pereira",
+  "Ibagué",
+  "Santa Marta"
+];
 
 export default function FoundationRegisterPage({ onBack }) {
   const [form, setForm] = useState({
@@ -10,7 +21,9 @@ export default function FoundationRegisterPage({ onBack }) {
     password: '',
     confirmPassword: '',
     nombreFundacion: '',
-    tieneTransporte: ''
+    tieneTransporte: '',
+    direccion: '',
+    ciudad: ''
   });
 
   const [acceptTerms, setAcceptTerms] = useState(false);
@@ -19,13 +32,16 @@ export default function FoundationRegisterPage({ onBack }) {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [apiError, setApiError] = useState('');
 
   const handleChange = (field) => (e) => {
     setForm((prev) => ({ ...prev, [field]: e.target.value }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setApiError('');
     if (form.password !== form.confirmPassword) {
       alert('Las contraseñas no coinciden.');
       return;
@@ -42,7 +58,34 @@ export default function FoundationRegisterPage({ onBack }) {
       alert('Debes aceptar todos los acuerdos y términos legales.');
       return;
     }
-    setSubmitted(true);
+    setLoading(true);
+    try {
+      const res = await fetch('/api/register/foundation', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          nombres: form.nombres,
+          apellidos: form.apellidos,
+          email: form.email,
+          telefono: form.telefono,
+          password: form.password,
+          nombreFundacion: form.nombreFundacion,
+          tieneTransporte: form.tieneTransporte,
+          direccion: form.direccion,
+          ciudad: form.ciudad,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setApiError(data.message || 'Error al registrar.');
+        setLoading(false);
+        return;
+      }
+      setSubmitted(true);
+    } catch (err) {
+      setApiError('No se pudo conectar con el servidor.');
+      setLoading(false);
+    }
   };
 
   if (submitted) {
@@ -112,10 +155,10 @@ export default function FoundationRegisterPage({ onBack }) {
             {/* Grid 2 Columns */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               
-              {/* Fila 1: Nombres */}
+              {/* Fila 1: Nombres del Encargado */}
               <div className="flex flex-col gap-1.5">
                 <label htmlFor="nombres" className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-                  Nombres
+                  Nombres del Encargado
                 </label>
                 <div className="relative">
                   <User className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
@@ -131,10 +174,10 @@ export default function FoundationRegisterPage({ onBack }) {
                 </div>
               </div>
 
-              {/* Fila 1: Apellidos */}
+              {/* Fila 1: Apellidos del Encargado */}
               <div className="flex flex-col gap-1.5">
                 <label htmlFor="apellidos" className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-                  Apellidos
+                  Apellidos del Encargado
                 </label>
                 <input
                   id="apellidos"
@@ -276,6 +319,44 @@ export default function FoundationRegisterPage({ onBack }) {
                 </select>
               </div>
 
+              {/* Fila 5: Dirección de la Fundación */}
+              <div className="flex flex-col gap-1.5">
+                <label htmlFor="direccion" className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+                  Dirección de la Fundación
+                </label>
+                <div className="relative">
+                  <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
+                  <input
+                    id="direccion"
+                    type="text"
+                    required
+                    placeholder="Ej: Avenida Caracas # 32-15"
+                    value={form.direccion}
+                    onChange={handleChange('direccion')}
+                    className="h-12 w-full rounded-xl border border-slate-200 bg-white pl-11 pr-4 text-sm text-slate-800 placeholder-slate-400 outline-none transition-all focus:border-blue-500 focus:ring-4 focus:ring-blue-100/60"
+                  />
+                </div>
+              </div>
+
+              {/* Fila 5: Ciudad */}
+              <div className="flex flex-col gap-1.5">
+                <label htmlFor="ciudad" className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+                  Ciudad
+                </label>
+                <select
+                  id="ciudad"
+                  required
+                  value={form.ciudad}
+                  onChange={handleChange('ciudad')}
+                  className="h-12 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm text-slate-800 outline-none transition-all focus:border-blue-500 focus:ring-4 focus:ring-blue-100/60 cursor-pointer"
+                >
+                  <option value="" disabled>Selecciona tu ciudad</option>
+                  {CITIES.map(c => (
+                    <option key={c} value={c.toLowerCase()}>{c}</option>
+                  ))}
+                </select>
+              </div>
+
             </div>
 
             {/* Fila Inferior: Checkboxes y Botón */}
@@ -314,12 +395,21 @@ export default function FoundationRegisterPage({ onBack }) {
                 </label>
               </div>
 
+              {apiError && (
+                <div className="flex items-center gap-2 bg-red-50 border border-red-100 text-red-600 rounded-xl p-3 text-xs font-semibold">
+                  <span>⚠️</span><span>{apiError}</span>
+                </div>
+              )}
+
               {/* Botón Principal */}
               <button
                 type="submit"
-                className="h-12 w-full bg-amber-500 hover:bg-amber-600 text-white font-extrabold rounded-xl shadow-lg shadow-amber-100 active:scale-[0.98] transition-all duration-200 uppercase tracking-wider text-xs cursor-pointer flex items-center justify-center"
+                disabled={loading}
+                className="h-12 w-full bg-amber-500 hover:bg-amber-600 disabled:opacity-60 disabled:cursor-not-allowed text-white font-extrabold rounded-xl shadow-lg shadow-amber-100 active:scale-[0.98] transition-all duration-200 uppercase tracking-wider text-xs cursor-pointer flex items-center justify-center gap-2"
               >
-                Crear cuenta
+                {loading ? (
+                  <><svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>Registrando...</>
+                ) : 'Crear cuenta'}
               </button>
             </div>
 

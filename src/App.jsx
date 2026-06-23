@@ -22,6 +22,10 @@ function App() {
   // Shopping Cart States
   const [cartItems, setCartItems] = useState([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const [user, setUser] = useState(() => {
+    const saved = localStorage.getItem('sadya_user');
+    return saved ? JSON.parse(saved) : null;
+  });
   const [currentPage, setCurrentPage] = useState('home'); // 'home' or 'register'
   const [toast, setToast] = useState(null);
 
@@ -169,7 +173,9 @@ function App() {
         <LoginPage 
           onBack={() => setCurrentPage('home')} 
           onOpenRegister={() => setCurrentPage('register')}
-          onLoginSuccess={(message) => {
+          onLoginSuccess={(userData, message) => {
+            setUser(userData);
+            localStorage.setItem('sadya_user', JSON.stringify(userData));
             showToast(message);
             setCurrentPage('home');
           }}
@@ -189,6 +195,7 @@ function App() {
     <div className="min-h-screen bg-[#f8fafc] text-slate-800 flex flex-col font-sans">
       {/* 1. Header / Navbar */}
       <Navbar 
+        user={user}
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
         cartCount={cartCount}
@@ -201,6 +208,26 @@ function App() {
         onOpenStoreRegister={() => setCurrentPage('register-store')}
         onOpenDelivererRegister={() => setCurrentPage('register-deliverer')}
         onOpenFoundationRegister={() => setCurrentPage('register-foundation')}
+        onGoToHome={() => {
+          setCurrentPage('home');
+          setSelectedCategory('all');
+        }}
+        onSelectCategory={(catId) => {
+          setSelectedCategory(catId);
+          setCurrentPage('home');
+          setTimeout(() => {
+            const element = document.getElementById('productos');
+            if (element) {
+              element.scrollIntoView({ behavior: 'smooth' });
+            }
+          }, 100);
+        }}
+        onLogout={() => {
+          setUser(null);
+          localStorage.removeItem('sadya_user');
+          showToast('Sesión cerrada con éxito');
+          setCurrentPage('home');
+        }}
       />
 
       <main className="flex-grow">

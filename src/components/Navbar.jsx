@@ -1,7 +1,21 @@
 import { useState } from 'react';
-import { Menu, MapPin, Search, Bell, User, ShoppingCart, X, Check } from 'lucide-react';
+import { 
+  Menu, MapPin, Search, Bell, User, ShoppingCart, X, Check,
+  Home, Grid, ShoppingBag, Leaf, Handshake, HelpCircle, LogOut, ChevronDown, ChevronUp,
+  LogIn, UserPlus
+} from 'lucide-react';
+import glowingStar from '../assets/categorias/Glowing star.svg';
+import redApple from '../assets/categorias/Red apple.svg';
+import broccoli from '../assets/categorias/Broccoli.svg';
+import sheafOfRice from '../assets/categorias/Sheaf of rice.svg';
+import cutOfMeat from '../assets/categorias/Cut of meat.svg';
+import glassOfMilk from '../assets/categorias/Glass of milk.svg';
+import bread from '../assets/categorias/Bread.svg';
+import shortcake from '../assets/categorias/Shortcake.svg';
+import hamburger from '../assets/categorias/Hamburger.svg';
 
 export default function Navbar({ 
+  user,
   searchQuery, 
   setSearchQuery, 
   cartCount, 
@@ -13,8 +27,25 @@ export default function Navbar({
   onOpenFarmerRegister,
   onOpenStoreRegister,
   onOpenDelivererRegister,
-  onOpenFoundationRegister
+  onOpenFoundationRegister,
+  onGoToHome,
+  onSelectCategory,
+  onLogout
 }) {
+  const [isCategoriesAccordionOpen, setIsCategoriesAccordionOpen] = useState(false);
+  const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
+
+  const categoryItems = [
+    { id: 'all', name: 'Todos', icon: glowingStar, bgColor: 'bg-slate-100 hover:bg-slate-200 text-slate-700' },
+    { id: 'frutas', name: 'Frutas', icon: redApple, bgColor: 'bg-red-50 hover:bg-red-100 text-red-700' },
+    { id: 'verduras', name: 'Verduras', icon: broccoli, bgColor: 'bg-green-50 hover:bg-green-100 text-green-700' },
+    { id: 'granos', name: 'Granos', icon: sheafOfRice, bgColor: 'bg-amber-50 hover:bg-amber-100 text-amber-700' },
+    { id: 'carnes', name: 'Carnicerías', icon: cutOfMeat, bgColor: 'bg-rose-50 hover:bg-rose-100 text-rose-700' },
+    { id: 'lacteos', name: 'Lácteos', icon: glassOfMilk, bgColor: 'bg-sky-50 hover:bg-sky-100 text-sky-700' },
+    { id: 'panaderia', name: 'Panaderías', icon: bread, bgColor: 'bg-yellow-50 hover:bg-yellow-100 text-yellow-700' },
+    { id: 'postres', name: 'Postres', icon: shortcake, bgColor: 'bg-pink-50 hover:bg-pink-100 text-pink-700' },
+    { id: 'rapida', name: 'Comidas Rápidas', icon: hamburger, bgColor: 'bg-orange-50 hover:bg-orange-100 text-orange-700' },
+  ];
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isLocationModalOpen, setIsLocationModalOpen] = useState(false);
   const [tempLocation, setTempLocation] = useState(currentLocation);
@@ -119,78 +150,129 @@ export default function Navbar({
                 </span>
               </button>
 
-              {/* My Account */}
-              <button 
-                onClick={onOpenLogin}
-                className="group flex flex-col items-center justify-center text-slate-600 hover:text-blue-600 transition-colors duration-200 cursor-pointer"
-              >
-                <div className="p-1">
-                  <User className="h-5 w-5 transition-transform group-hover:scale-110" />
-                </div>
-                <span className="text-[10px] font-medium mt-0.5 tracking-tight hidden md:block text-slate-500 group-hover:text-blue-600">
-                  Mi Cuenta
-                </span>
-              </button>
-
-              {/* Registrar Dropdown */}
+              {/* My Account / Profile Dropdown */}
               <div className="relative">
                 <button 
-                  onClick={() => setIsRegisterDropdownOpen(!isRegisterDropdownOpen)}
-                  className="bg-emerald-500 hover:bg-emerald-600 text-white font-extrabold px-4 py-2 rounded-xl text-xs shadow-md shadow-emerald-100/50 transition-all duration-200 active:scale-95 cursor-pointer"
+                  onClick={user ? () => setIsUserDropdownOpen(!isUserDropdownOpen) : onOpenLogin}
+                  className="group flex flex-col items-center justify-center text-slate-600 hover:text-blue-600 transition-colors duration-200 cursor-pointer focus:outline-none"
                 >
-                  Registrar
+                  <div className="p-1">
+                    {user ? (
+                      <div className="h-6 w-6 rounded-full bg-blue-100 border border-blue-200 flex items-center justify-center text-blue-700 text-xs font-bold transition-transform group-hover:scale-110">
+                        {user.nombres[0].toUpperCase()}
+                      </div>
+                    ) : (
+                      <User className="h-5 w-5 transition-transform group-hover:scale-110" />
+                    )}
+                  </div>
+                  <span className="text-[10px] font-medium mt-0.5 tracking-tight hidden md:block text-slate-500 group-hover:text-blue-600">
+                    {user ? user.nombres : 'Mi Cuenta'}
+                  </span>
                 </button>
-                
-                {isRegisterDropdownOpen && (
-                  <div className="absolute right-0 mt-2 w-52 rounded-2xl bg-white p-2 shadow-xl border border-slate-100 z-50 flex flex-col gap-1">
+
+                {user && isUserDropdownOpen && (
+                  <div className="absolute right-0 mt-2 w-56 rounded-2xl bg-white p-3 shadow-xl border border-slate-100 z-50 flex flex-col gap-1.5 animate-slide-in">
+                    <div className="px-3 py-2 border-b border-slate-100">
+                      <p className="text-xs font-black text-slate-900 leading-tight">
+                        {user.nombres} {user.apellidos || ''}
+                      </p>
+                      <p className="text-[10px] font-bold text-slate-400 mt-0.5 uppercase tracking-wider">
+                        Rol: {user.rol || 'Cliente'}
+                      </p>
+                    </div>
                     <button 
                       onClick={() => {
-                        setIsRegisterDropdownOpen(false);
-                        onOpenFarmerRegister();
+                        setIsUserDropdownOpen(false);
+                        alert(`Mi Perfil:\nNombre: ${user.nombres} ${user.apellidos || ''}\nCelular: ${user.telefono || 'No registrado'}\nRol: ${user.rol}`);
                       }}
-                      className="w-full text-left rounded-xl px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-blue-50/70 hover:text-blue-600 hover:scale-[1.04] active:scale-[0.98] transition-all duration-200 transform origin-left cursor-pointer"
+                      className="w-full text-left rounded-xl px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-blue-50/70 hover:text-blue-600 transition-all duration-200 cursor-pointer"
                     >
-                      Productor / Campesino
+                      Mi Perfil
                     </button>
                     <button 
                       onClick={() => {
-                        setIsRegisterDropdownOpen(false);
-                        onOpenStoreRegister();
+                        setIsUserDropdownOpen(false);
+                        alert("Historial de mis pedidos de rescate.");
                       }}
-                      className="w-full text-left rounded-xl px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-blue-50/70 hover:text-blue-600 hover:scale-[1.04] active:scale-[0.98] transition-all duration-200 transform origin-left cursor-pointer"
+                      className="w-full text-left rounded-xl px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-blue-50/70 hover:text-blue-600 transition-all duration-200 cursor-pointer"
                     >
-                      Tienda
+                      Mis Pedidos
                     </button>
                     <button 
                       onClick={() => {
-                        setIsRegisterDropdownOpen(false);
-                        onOpenDelivererRegister();
+                        setIsUserDropdownOpen(false);
+                        if (onLogout) onLogout();
                       }}
-                      className="w-full text-left rounded-xl px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-blue-50/70 hover:text-blue-600 hover:scale-[1.04] active:scale-[0.98] transition-all duration-200 transform origin-left cursor-pointer"
+                      className="w-full text-left rounded-xl px-3 py-2 text-xs font-bold text-red-500 hover:bg-red-50 transition-all duration-200 flex items-center gap-2 cursor-pointer mt-1"
                     >
-                      Domiciliario / Transportador
-                    </button>
-                    <button 
-                      onClick={() => {
-                        setIsRegisterDropdownOpen(false);
-                        onOpenFoundationRegister();
-                      }}
-                      className="w-full text-left rounded-xl px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-blue-50/70 hover:text-blue-600 hover:scale-[1.04] active:scale-[0.98] transition-all duration-200 transform origin-left cursor-pointer"
-                    >
-                      Fundación
-                    </button>
-                    <button 
-                      onClick={() => {
-                        setIsRegisterDropdownOpen(false);
-                        onOpenAuthModal('cliente');
-                      }}
-                      className="w-full text-left rounded-xl px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-blue-50/70 hover:text-blue-600 hover:scale-[1.04] active:scale-[0.98] transition-all duration-200 transform origin-left cursor-pointer"
-                    >
-                      Cliente
+                      <LogOut className="h-3.5 w-3.5" />
+                      Cerrar Sesión
                     </button>
                   </div>
                 )}
               </div>
+
+              {/* Registrar Dropdown */}
+              {!user && (
+                <div className="relative">
+                  <button 
+                    onClick={() => setIsRegisterDropdownOpen(!isRegisterDropdownOpen)}
+                    className="bg-emerald-500 hover:bg-emerald-600 text-white font-extrabold px-4 py-2 rounded-xl text-xs shadow-md shadow-emerald-100/50 transition-all duration-200 active:scale-95 cursor-pointer"
+                  >
+                    Registrar
+                  </button>
+                  
+                  {isRegisterDropdownOpen && (
+                    <div className="absolute right-0 mt-2 w-52 rounded-2xl bg-white p-2 shadow-xl border border-slate-100 z-50 flex flex-col gap-1">
+                      <button 
+                        onClick={() => {
+                          setIsRegisterDropdownOpen(false);
+                          onOpenFarmerRegister();
+                        }}
+                        className="w-full text-left rounded-xl px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-blue-50/70 hover:text-blue-600 hover:scale-[1.04] active:scale-[0.98] transition-all duration-200 transform origin-left cursor-pointer"
+                      >
+                        Productor / Campesino
+                      </button>
+                      <button 
+                        onClick={() => {
+                          setIsRegisterDropdownOpen(false);
+                          onOpenStoreRegister();
+                        }}
+                        className="w-full text-left rounded-xl px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-blue-50/70 hover:text-blue-600 hover:scale-[1.04] active:scale-[0.98] transition-all duration-200 transform origin-left cursor-pointer"
+                      >
+                        Tienda
+                      </button>
+                      <button 
+                        onClick={() => {
+                          setIsRegisterDropdownOpen(false);
+                          onOpenDelivererRegister();
+                        }}
+                        className="w-full text-left rounded-xl px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-blue-50/70 hover:text-blue-600 hover:scale-[1.04] active:scale-[0.98] transition-all duration-200 transform origin-left cursor-pointer"
+                      >
+                        Domiciliario / Transportador
+                      </button>
+                      <button 
+                        onClick={() => {
+                          setIsRegisterDropdownOpen(false);
+                          onOpenFoundationRegister();
+                        }}
+                        className="w-full text-left rounded-xl px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-blue-50/70 hover:text-blue-600 hover:scale-[1.04] active:scale-[0.98] transition-all duration-200 transform origin-left cursor-pointer"
+                      >
+                        Fundación
+                      </button>
+                      <button 
+                        onClick={() => {
+                          setIsRegisterDropdownOpen(false);
+                          onOpenAuthModal('cliente');
+                        }}
+                        className="w-full text-left rounded-xl px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-blue-50/70 hover:text-blue-600 hover:scale-[1.04] active:scale-[0.98] transition-all duration-200 transform origin-left cursor-pointer"
+                      >
+                        Cliente
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* Shopping Cart */}
               <button 
@@ -246,73 +328,250 @@ export default function Navbar({
             className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity duration-300"
           />
           {/* Menu Panel */}
-          <div className="relative mr-auto flex h-full w-full max-w-[280px] flex-col bg-white p-6 shadow-2xl transition-transform duration-300">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-4">
-              <div className="flex items-center gap-2">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-600 text-white font-extrabold shadow">
-                  S
+          <div className="relative mr-auto flex h-full w-full max-w-[290px] flex-col bg-white shadow-2xl transition-transform duration-300">
+            
+            {/* 1. Cabecera de Usuario (Fijada arriba) */}
+            <div className="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+              {user ? (
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-full bg-blue-100 border border-blue-200 flex items-center justify-center text-blue-700 text-sm font-extrabold shadow-sm">
+                    {user.nombres[0].toUpperCase()}
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-bold text-slate-900 leading-tight">
+                      {user.nombres} {user.apellidos || ''}
+                    </h4>
+                    <button 
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setIsMobileMenuOpen(false);
+                        alert(`Mi Perfil:\nNombre: ${user.nombres} ${user.apellidos || ''}\nCelular: ${user.telefono || 'No registrado'}\nRol: ${user.rol}`);
+                      }}
+                      className="text-xs font-semibold text-slate-400 hover:text-blue-600 transition-colors block text-left"
+                    >
+                      Ver perfil · {user.rol || 'Cliente'}
+                    </button>
+                  </div>
                 </div>
-                <span className="text-lg font-bold text-slate-900">SADYA Menu</span>
-              </div>
+              ) : (
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-400 shadow-sm">
+                    <User className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-bold text-slate-800 leading-tight">Bienvenido</h4>
+                    <button 
+                      onClick={() => {
+                        setIsMobileMenuOpen(false);
+                        onOpenLogin();
+                      }}
+                      className="text-xs font-bold text-blue-600 hover:underline transition-colors block text-left"
+                    >
+                      Iniciar Sesión
+                    </button>
+                  </div>
+                </div>
+              )}
               <button 
                 onClick={() => setIsMobileMenuOpen(false)}
-                className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+                className="rounded-full p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors"
+                aria-label="Cerrar menú"
               >
                 <X className="h-5 w-5" />
               </button>
             </div>
 
-            <nav className="mt-6 flex-1 space-y-4">
-              <a href="#" className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 hover:text-blue-600 transition-colors">
-                Inicio
-              </a>
-              <a href="#" className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 hover:text-blue-600 transition-colors">
-                Mis Compras
-              </a>
-              <a href="#" className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 hover:text-blue-600 transition-colors">
-                Impacto Social
-              </a>
-              <a href="#" className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 hover:text-blue-600 transition-colors">
-                Tiendas Aliadas
-              </a>
-              <a href="#" className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 hover:text-blue-600 transition-colors">
-                Ayuda y Soporte
-              </a>
-              <button 
-                onClick={() => {
-                  setIsMobileMenuOpen(false);
-                  onOpenLogin();
-                }}
-                className="w-full flex items-center justify-center rounded-xl border border-slate-200 text-slate-700 font-extrabold py-2.5 text-xs tracking-wider uppercase shadow-sm transition-colors cursor-pointer mt-4"
-              >
-                Iniciar Sesión
-              </button>
-              <button 
-                onClick={() => {
-                  setIsMobileMenuOpen(false);
-                  onOpenAuthModal('cliente');
-                }}
-                className="w-full flex items-center justify-center rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-extrabold py-2.5 text-xs tracking-wider uppercase shadow-md transition-colors cursor-pointer mt-2"
-              >
-                Registrar
-              </button>
-            </nav>
+            {/* Scrollable Navigation Area */}
+            <div className="flex-1 overflow-y-auto no-scrollbar p-5 space-y-6">
+              
+              {/* 2. Sección: Navegación Principal */}
+              <nav className="space-y-1">
+                <button 
+                  onClick={() => {
+                    setIsMobileMenuOpen(false);
+                    if (onGoToHome) onGoToHome();
+                  }}
+                  className="w-full flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 hover:text-blue-600 transition-all duration-200 cursor-pointer"
+                >
+                  <Home className="h-5 w-5 text-slate-400" />
+                  <span>Inicio</span>
+                </button>
 
-            <div className="border-t border-slate-100 pt-4">
-              <div className="flex items-center gap-3 px-3 py-2 text-xs font-semibold uppercase tracking-wider text-slate-400">
-                Ubicación Actual
+                {/* Acordeón: Explorar Categorías */}
+                <div>
+                  <button 
+                    onClick={() => setIsCategoriesAccordionOpen(!isCategoriesAccordionOpen)}
+                    className="w-full flex items-center justify-between rounded-xl px-3 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 hover:text-blue-600 transition-all duration-200 cursor-pointer"
+                  >
+                    <div className="flex items-center gap-3">
+                      <Grid className="h-5 w-5 text-slate-400" />
+                      <span>Explorar Categorías</span>
+                    </div>
+                    {isCategoriesAccordionOpen ? (
+                      <ChevronUp className="h-4 w-4 text-slate-400" />
+                    ) : (
+                      <ChevronDown className="h-4 w-4 text-slate-400" />
+                    )}
+                  </button>
+
+                  {/* Accordion Content */}
+                  {isCategoriesAccordionOpen && (
+                    <div className="pl-6 pr-2 py-1.5 space-y-1.5 border-l-2 border-slate-100 ml-5 mt-1 animate-slide-down">
+                      {categoryItems.map((cat) => (
+                        <button
+                          key={cat.id}
+                          onClick={() => {
+                            setIsMobileMenuOpen(false);
+                            if (onSelectCategory) {
+                              onSelectCategory(cat.id);
+                            }
+                          }}
+                          className="w-full text-left py-2 px-3 text-xs font-semibold text-slate-600 hover:text-blue-600 hover:bg-blue-50/50 rounded-lg transition-colors flex items-center gap-2.5 cursor-pointer"
+                        >
+                          <img src={cat.icon} alt={cat.name} className="h-5 w-5 object-contain shrink-0" />
+                          <span>{cat.name}</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {user ? (
+                  <>
+                    <button 
+                      onClick={() => {
+                        setIsMobileMenuOpen(false);
+                        alert("Sección de Mis Pedidos simulada.");
+                      }}
+                      className="w-full flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 hover:text-blue-600 transition-all duration-200 cursor-pointer"
+                    >
+                      <ShoppingBag className="h-5 w-5 text-slate-400" />
+                      <span>Mis Pedidos</span>
+                    </button>
+
+                    <button 
+                      onClick={() => {
+                        setIsMobileMenuOpen(false);
+                        alert("Mi Impacto Ecológico en SADYA.");
+                      }}
+                      className="w-full flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 hover:text-blue-600 transition-all duration-200 cursor-pointer"
+                    >
+                      <Leaf className="h-5 w-5 text-green-500" />
+                      <span>Mi Impacto</span>
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <button 
+                      onClick={() => {
+                        setIsMobileMenuOpen(false);
+                        onOpenLogin();
+                      }}
+                      className="w-full flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 hover:text-blue-600 transition-all duration-200 cursor-pointer"
+                    >
+                      <LogIn className="h-5 w-5 text-slate-400" />
+                      <span>Iniciar Sesión</span>
+                    </button>
+
+                    <button 
+                      onClick={() => {
+                        setIsMobileMenuOpen(false);
+                        onOpenAuthModal();
+                      }}
+                      className="w-full flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 hover:text-blue-600 transition-all duration-200 cursor-pointer"
+                    >
+                      <UserPlus className="h-5 w-5 text-slate-400" />
+                      <span>Crear Cuenta</span>
+                    </button>
+                  </>
+                )}
+              </nav>
+
+              {/* 3. Sección: Expansión */}
+              {(!user || user.rol === 'Cliente') && (
+                <div className="pt-4 border-t border-slate-100">
+                  <span className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2 px-3">
+                    TRABAJA CON NOSOTROS
+                  </span>
+                  <button 
+                    onClick={() => {
+                      setIsMobileMenuOpen(false);
+                      onOpenAuthModal();
+                    }}
+                    className="w-full flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 hover:text-blue-600 transition-all duration-200 cursor-pointer"
+                  >
+                    <Handshake className="h-5 w-5 text-slate-400" />
+                    <span>Únete a la familia SADYA</span>
+                  </button>
+                </div>
+              )}
+
+              {/* 4. Sección: Cuenta y Soporte */}
+              <div className="pt-4 border-t border-slate-100">
+                <span className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2 px-3">
+                  SOPORTE
+                </span>
+                <button 
+                  onClick={() => {
+                    setIsMobileMenuOpen(false);
+                    if (user) {
+                      alert(`Mi Cuenta:\nNombre: ${user.nombres} ${user.apellidos || ''}\nCelular: ${user.telefono || 'No registrado'}\nRol: ${user.rol}`);
+                    } else {
+                      onOpenLogin();
+                    }
+                  }}
+                  className="w-full flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 hover:text-blue-600 transition-all duration-200 cursor-pointer"
+                >
+                  <User className="h-5 w-5 text-slate-400" />
+                  <span>Información de mi cuenta</span>
+                </button>
+
+                <button 
+                  onClick={() => {
+                    setIsMobileMenuOpen(false);
+                    alert("Centro de Ayuda y Tutoriales.");
+                  }}
+                  className="w-full flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 hover:text-blue-600 transition-all duration-200 cursor-pointer"
+                >
+                  <HelpCircle className="h-5 w-5 text-slate-400" />
+                  <span>Ayuda y Tutoriales</span>
+                </button>
               </div>
-              <button 
-                onClick={() => {
-                  setIsMobileMenuOpen(false);
-                  setIsLocationModalOpen(true);
-                }}
-                className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-slate-600 hover:bg-slate-50"
-              >
-                <MapPin className="h-4 w-4 text-blue-600 shrink-0" />
-                <span className="truncate">{currentLocation}</span>
-              </button>
+
             </div>
+
+            {/* 5. Footer del Menú (Fijado abajo) */}
+            <div className="p-5 border-t border-slate-100 bg-slate-50/50 space-y-3 mt-auto">
+              <div>
+                <span className="block text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1 px-1">
+                  Ubicación de entrega
+                </span>
+                <button 
+                  onClick={() => {
+                    setIsMobileMenuOpen(false);
+                    setIsLocationModalOpen(true);
+                  }}
+                  className="flex w-full items-center gap-2 rounded-xl px-2.5 py-1.5 text-left text-xs text-slate-600 hover:bg-slate-100 transition-colors truncate font-semibold"
+                >
+                  <MapPin className="h-4 w-4 text-blue-600 shrink-0" />
+                  <span className="truncate">{currentLocation}</span>
+                </button>
+              </div>
+
+              {user && (
+                <button 
+                  onClick={() => {
+                    setIsMobileMenuOpen(false);
+                    if (onLogout) onLogout();
+                  }}
+                  className="w-full flex items-center gap-3 rounded-xl px-2.5 py-2 text-xs font-bold text-red-500 hover:bg-red-50 transition-colors cursor-pointer"
+                >
+                  <LogOut className="h-4 w-4 text-red-500" />
+                  <span>Cerrar Sesión</span>
+                </button>
+              )}
+            </div>
+
           </div>
         </div>
       )}
