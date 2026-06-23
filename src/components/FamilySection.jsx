@@ -12,10 +12,13 @@ const FAMILY_ROLES = [
     title: 'Productor / Campesino',
     image: campesinoImg,
     benefits: [
-      'Aumentar ingresos económicos vendiendo excedentes',
-      'Disminuir la pérdida de productos cosechados',
-      'Evitar intermediarios y conectar directamente',
-      'Visibilidad digital de su finca y cosechas'
+      'Disminuir las pérdidas postcosecha mediante la comercialización oportuna',
+      'Comercializar productos con diferentes estándares de calidad',
+      'Obtener mayor visibilidad de sus productos mediante SADYA',
+      'Acceder a información actualizada sobre precios de productos',
+      'Facilitar la gestión logística mediante la conexión con transportadores',
+      'Donar alimentos aptos para consumo, beneficiando a familias vulnerables',
+      'Recibir incentivos, descuentos u otros beneficios por la entrega de desperdicios y donaciones'
     ]
   },
   {
@@ -23,10 +26,14 @@ const FAMILY_ROLES = [
     title: 'Tiendas',
     image: tenderoImg,
     benefits: [
-      'Recuperar el costo de mermas y productos próximos a vencer',
-      'Atraer nuevos clientes locales a su establecimiento',
-      'Optimizar la rotación de inventario diario',
-      'Posicionar su negocio como un comercio sostenible'
+      'Aumentar los ingresos mediante la venta de productos próximos a ven',
+      'Reducir significativamente las pérdidas',
+      'Obtener mayor rotación de productos y optimizar el manejo del inventario',
+      'Incrementar la visibilidad de su negocio',
+      'Acceder a productos frescos directamente de productores a precios competitivos',
+      'Llegar a nuevos clientes mediante la plataforma tecnológica SADYA',
+      'Realizar donaciones de alimentos y generar impacto social',
+      'Recibir incentivos, descuentos u otros beneficios por la entrega de desperdicios y donaciones'
     ]
   },
   {
@@ -34,10 +41,15 @@ const FAMILY_ROLES = [
     title: 'Domiciliario',
     image: domiciliarioImg,
     benefits: [
-      'Ganar dinero extra con total flexibilidad',
-      'Elegir horarios y zonas de trabajo convenientes',
-      'Recibir el 100% de tus propinas diarias',
-      'Rutas de entrega cortas y optimizadas'
+      'Acceder a oportunidades permanentes de entrega de pedidos',
+      'Generar ingresos adicionales de forma flexible',
+      'Optimizar las rutas mediante geolocalización y planificación inteligente',
+      'Recibir solicitudes cercanas a su ubicación actual',
+      'Optimizar tiempos de desplazamiento mediante rutas inteligentes',
+      'Recibir pagos seguros y oportunos',
+      'Incrementar sus ganancias mediante incentivos por cumplimiento',
+      'Participar en una iniciativa con impacto social y ambiental',
+      'Recibir incentivos, descuentos u otros beneficios por la entrega de desperdicios y donaciones'
     ]
   },
   {
@@ -45,10 +57,13 @@ const FAMILY_ROLES = [
     title: 'Transportador',
     image: transportadorImg,
     benefits: [
-      'Optimizar espacio de carga en fletes de retorno',
-      'Aumentar la rentabilidad del vehículo o camión',
-      'Acceder a contratos estables de recolección',
-      'Contribuir a reducir la huella de carbono'
+      'Generar ingresos adicionales por servicios de transporte de alimentos',
+      'Acceder a ofertas constantes de viajes y servicios logísticos',
+      'Optimizar las rutas mediante geolocalización y planificación inteligente',
+      'Reducir tiempos muertos y recorridos sin carga',
+      'Recibir pagos seguros a través de la plataforma',
+      'Incrementar sus oportunidades laborales sin necesidad de intermediarios',
+      'Obtener incentivos y bonificaciones por cumplimiento de servicios'
     ]
   },
   {
@@ -56,10 +71,14 @@ const FAMILY_ROLES = [
     title: 'Clientes',
     image: clienteImg,
     benefits: [
-      'Comprar alimentos de calidad hasta 70% más baratos',
-      'Prevenir el desperdicio de comida en tu ciudad',
-      'Descubrir nuevos comercios y productos cercanos',
-      'Ahorrar dinero en la compra de la canasta básica'
+      'Acceder a productos frescos a precios más económicos',
+      'Ahorrar dinero mediante promociones y descuentos especiales',
+      'Comprar productos próximos a vencer con total información y seguridad',
+      'Encontrar alimentos de temporada y cosecha a mejores precios',
+      'Acceder a recetas saludables y recibir recomendaciones personalizadas',
+      'Contribuir a la reducción del desperdicio alimentario',
+      'Apoyar directamente a productores locales y pequeños comerciantes',
+      'Participar en descuentos u otros beneficios exclusivos por tus compras'
     ]
   },
   {
@@ -67,10 +86,14 @@ const FAMILY_ROLES = [
     title: 'Fundación',
     image: fundacionImg,
     benefits: [
-      'Recibir donaciones de alimentos en perfectas condiciones',
-      'Ampliar la cobertura de personas vulnerables beneficiadas',
-      'Reducir costos operativos de abastecimiento',
-      'Lograr beneficios tributarios certificados'
+      'Recibir alimentos aptos para consumo humano',
+      'Incrementar la cobertura de atención a poblaciones vulnerables',
+      'Reducir tiempos de gestión y búsqueda de donantes',
+      'Optimizar la distribución de ayudas alimentarias',
+      'Acceder a reportes e indicadores de impacto social',
+      'Coordinar la recolección de donaciones mediante rutas inteligentes',
+      'Fortalecer programas de seguridad alimentaria',
+      'Disminuir el desperdicio de alimentos aptos para consumo'
     ]
   }
 ];
