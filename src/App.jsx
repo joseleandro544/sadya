@@ -11,6 +11,7 @@ import Promotions from './components/Promotions';
 import ProductGrid from './components/ProductGrid';
 import FamilySection from './components/FamilySection';
 import LoginPage from './components/LoginPage';
+import SellerProductsPage from './components/SellerProductsPage';
 import { X, Trash2, ShieldAlert, HeartHandshake, CheckCircle } from 'lucide-react';
 
 function App() {
@@ -54,6 +55,22 @@ function App() {
     }, 3000);
   };
 
+  const handleRegisterSuccess = (userData, role, message) => {
+    const loggedUser = {
+      id: userData?.id || userData?.id_usuario,
+      nombres: userData?.nombres || 'Usuario',
+      apellidos: userData?.apellidos || '',
+      email: userData?.email || '',
+      telefono: userData?.telefono || '',
+      rol: role
+    };
+    setUser(loggedUser);
+    localStorage.setItem('sadya_user', JSON.stringify(loggedUser));
+    localStorage.removeItem('sadya_read_notifications');
+    showToast(message);
+    setCurrentPage('home');
+  };
+
   const handleUpdateQuantity = (productId, amount) => {
     setCartItems((prev) => {
       return prev.map(item => {
@@ -95,7 +112,10 @@ function App() {
   if (currentPage === 'register-farmer') {
     return (
       <div className="min-h-screen bg-[#f8fafc] text-slate-800 flex flex-col font-sans">
-        <FarmerRegisterPage onBack={() => setCurrentPage('home')} />
+        <FarmerRegisterPage 
+          onBack={() => setCurrentPage('home')} 
+          onRegisterSuccess={(userData, role, msg) => handleRegisterSuccess(userData, role, msg)}
+        />
         {/* Toast Notification */}
         {toast && (
           <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2.5 bg-slate-900 text-white px-5 py-3 rounded-2xl shadow-xl transition-all duration-300 animate-slide-in border border-slate-800">
@@ -110,7 +130,10 @@ function App() {
   if (currentPage === 'register-store') {
     return (
       <div className="min-h-screen bg-[#f8fafc] text-slate-800 flex flex-col font-sans">
-        <StoreRegisterPage onBack={() => setCurrentPage('home')} />
+        <StoreRegisterPage 
+          onBack={() => setCurrentPage('home')} 
+          onRegisterSuccess={(userData, role, msg) => handleRegisterSuccess(userData, role, msg)}
+        />
         {/* Toast Notification */}
         {toast && (
           <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2.5 bg-slate-900 text-white px-5 py-3 rounded-2xl shadow-xl transition-all duration-300 animate-slide-in border border-slate-800">
@@ -125,7 +148,10 @@ function App() {
   if (currentPage === 'register-foundation') {
     return (
       <div className="min-h-screen bg-[#f8fafc] text-slate-800 flex flex-col font-sans">
-        <FoundationRegisterPage onBack={() => setCurrentPage('home')} />
+        <FoundationRegisterPage 
+          onBack={() => setCurrentPage('home')} 
+          onRegisterSuccess={(userData, role, msg) => handleRegisterSuccess(userData, role, msg)}
+        />
         {/* Toast Notification */}
         {toast && (
           <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2.5 bg-slate-900 text-white px-5 py-3 rounded-2xl shadow-xl transition-all duration-300 animate-slide-in border border-slate-800">
@@ -140,7 +166,10 @@ function App() {
   if (currentPage === 'register-deliverer') {
     return (
       <div className="min-h-screen bg-[#f8fafc] text-slate-800 flex flex-col font-sans">
-        <DelivererRegisterPage onBack={() => setCurrentPage('home')} />
+        <DelivererRegisterPage 
+          onBack={() => setCurrentPage('home')} 
+          onRegisterSuccess={(userData, role, msg) => handleRegisterSuccess(userData, role, msg)}
+        />
         {/* Toast Notification */}
         {toast && (
           <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2.5 bg-slate-900 text-white px-5 py-3 rounded-2xl shadow-xl transition-all duration-300 animate-slide-in border border-slate-800">
@@ -155,7 +184,11 @@ function App() {
   if (currentPage === 'register') {
     return (
       <div className="min-h-screen bg-[#f8fafc] text-slate-800 flex flex-col font-sans">
-        <RegisterPage onBack={() => setCurrentPage('home')} />
+        <RegisterPage 
+          onBack={() => setCurrentPage('home')} 
+          onRegisterSuccess={(userData, role, msg) => handleRegisterSuccess(userData, role, msg)}
+          onOpenLogin={() => setCurrentPage('login')}
+        />
         {/* Toast Notification */}
         {toast && (
           <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2.5 bg-slate-900 text-white px-5 py-3 rounded-2xl shadow-xl transition-all duration-300 animate-slide-in border border-slate-800">
@@ -176,9 +209,28 @@ function App() {
           onLoginSuccess={(userData, message) => {
             setUser(userData);
             localStorage.setItem('sadya_user', JSON.stringify(userData));
+            localStorage.removeItem('sadya_read_notifications');
             showToast(message);
             setCurrentPage('home');
           }}
+        />
+        {/* Toast Notification */}
+        {toast && (
+          <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2.5 bg-slate-900 text-white px-5 py-3 rounded-2xl shadow-xl transition-all duration-300 animate-slide-in border border-slate-800">
+            <CheckCircle className="h-5 w-5 text-green-500 shrink-0" />
+            <span className="text-xs font-bold tracking-tight">{toast}</span>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  if (currentPage === 'seller-products') {
+    return (
+      <div className="min-h-screen bg-[#f8fafc] text-slate-800 flex flex-col font-sans">
+        <SellerProductsPage 
+          user={user} 
+          onBack={() => setCurrentPage('home')} 
         />
         {/* Toast Notification */}
         {toast && (
@@ -208,6 +260,7 @@ function App() {
         onOpenStoreRegister={() => setCurrentPage('register-store')}
         onOpenDelivererRegister={() => setCurrentPage('register-deliverer')}
         onOpenFoundationRegister={() => setCurrentPage('register-foundation')}
+        onOpenSellerProducts={() => setCurrentPage('seller-products')}
         onGoToHome={() => {
           setCurrentPage('home');
           setSelectedCategory('all');
@@ -225,6 +278,7 @@ function App() {
         onLogout={() => {
           setUser(null);
           localStorage.removeItem('sadya_user');
+          localStorage.removeItem('sadya_read_notifications');
           showToast('Sesión cerrada con éxito');
           setCurrentPage('home');
         }}
@@ -299,11 +353,19 @@ function App() {
               </a>
             </div>
           </div>
-          <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4">
-            <span className="text-xs text-slate-400">
-              © {new Date().getFullYear()} SADYA Marketplace. Todos los derechos reservados.
-            </span>
-            <div className="flex items-center gap-2 text-xs text-slate-400">
+          <div className="pt-8 flex flex-col md:flex-row items-center justify-between gap-6">
+            <div className="flex flex-col gap-1.5 text-center md:text-left">
+              <span className="text-xs font-black uppercase tracking-wider text-sky-400">
+                TODOS LOS DERECHOS RESERVADOS
+              </span>
+              <span className="text-xs font-medium text-sky-400/85">
+                Fundación SADYA.com NIT 1463718-8. Calle 85 #45-49 Piso 3, Bogotá, Colombia
+              </span>
+              <span className="text-[10px] text-slate-400 mt-1">
+                © {new Date().getFullYear()} SADYA Marketplace · Emojis por Microsoft Fluent Emoji Gallery.
+              </span>
+            </div>
+            <div className="flex items-center gap-2 text-xs text-slate-400 shrink-0">
               <span>Hecho con</span>
               <HeartHandshake className="h-4 w-4 text-rose-500 animate-pulse" />
               <span>por el Impacto Social</span>

@@ -13,7 +13,7 @@ const CITIES = [
 
 import { useState } from 'react';
 
-export default function StoreRegisterPage({ onBack }) {
+export default function StoreRegisterPage({ onBack, onRegisterSuccess }) {
   const [form, setForm] = useState({
     nombres: '',
     apellidos: '',
@@ -36,26 +36,47 @@ export default function StoreRegisterPage({ onBack }) {
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [apiError, setApiError] = useState('');
+  const [errors, setErrors] = useState({
+    password: '',
+    confirmPassword: '',
+    acceptTerms: '',
+    acceptAgreement: ''
+  });
 
   const handleChange = (field) => (e) => {
     setForm((prev) => ({ ...prev, [field]: e.target.value }));
+    setErrors((prev) => ({ ...prev, [field]: '' }));
+    if (field === 'password' || field === 'confirmPassword') {
+      setErrors((prev) => ({ ...prev, password: '', confirmPassword: '' }));
+    }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setApiError('');
-    if (form.password !== form.confirmPassword) {
-      alert('Las contraseñas no coinciden.');
-      return;
-    }
+    let hasError = false;
+    const newErrors = { password: '', confirmPassword: '', acceptTerms: '', acceptAgreement: '' };
+
     if (form.password.length < 8) {
-      alert('La contraseña debe tener un mínimo de 8 caracteres.');
-      return;
+      newErrors.password = 'La contraseña debe tener un mínimo de 8 caracteres.';
+      hasError = true;
     }
-    if (!acceptTerms || !acceptAgreement) {
-      alert('Debes aceptar todos los términos y acuerdos legales.');
-      return;
+    if (form.password !== form.confirmPassword) {
+      newErrors.confirmPassword = 'Las contraseñas no coinciden.';
+      hasError = true;
     }
+    if (!acceptTerms) {
+      newErrors.acceptTerms = 'Debes aceptar los Términos y Condiciones.';
+      hasError = true;
+    }
+    if (!acceptAgreement) {
+      newErrors.acceptAgreement = 'Debes aceptar el Acuerdo Comercial.';
+      hasError = true;
+    }
+
+    setErrors(newErrors);
+    if (hasError) return;
+
     setLoading(true);
     try {
       const res = await fetch('/api/register/store', {
@@ -80,7 +101,12 @@ export default function StoreRegisterPage({ onBack }) {
         setLoading(false);
         return;
       }
-      setSubmitted(true);
+      setLoading(false);
+      if (onRegisterSuccess) {
+        onRegisterSuccess({ ...data.data, email: form.email, telefono: form.telefono }, 'Tienda', '¡Tienda registrada con éxito! Los datos del comercio ' + form.nombreTienda + ' han sido registrados.');
+      } else {
+        setSubmitted(true);
+      }
     } catch (err) {
       setApiError('No se pudo conectar con el servidor.');
       setLoading(false);
@@ -243,7 +269,9 @@ export default function StoreRegisterPage({ onBack }) {
                     placeholder="Mínimo 8 caracteres"
                     value={form.password}
                     onChange={handleChange('password')}
-                    className="h-12 w-full rounded-xl border border-slate-200 bg-white pl-11 pr-12 text-sm text-slate-800 placeholder-slate-400 outline-none transition-all focus:border-blue-500 focus:ring-4 focus:ring-blue-100/60"
+                    className={`h-12 w-full rounded-xl border bg-white pl-11 pr-12 text-sm text-slate-800 placeholder-slate-400 outline-none transition-all focus:ring-4 ${
+                      errors.password ? 'border-red-500 focus:border-red-500 focus:ring-red-100/50' : 'border-slate-200 focus:border-blue-500 focus:ring-blue-100/60'
+                    }`}
                   />
                   <button
                     type="button"
@@ -253,6 +281,7 @@ export default function StoreRegisterPage({ onBack }) {
                     {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
                 </div>
+                {errors.password && <span className="text-[10px] font-bold text-red-500 block mt-0.5">{errors.password}</span>}
               </div>
 
               {/* Fila 3: Confirmar contraseña */}
@@ -269,7 +298,9 @@ export default function StoreRegisterPage({ onBack }) {
                     placeholder="Repite tu contraseña"
                     value={form.confirmPassword}
                     onChange={handleChange('confirmPassword')}
-                    className="h-12 w-full rounded-xl border border-slate-200 bg-white pl-11 pr-12 text-sm text-slate-800 placeholder-slate-400 outline-none transition-all focus:border-blue-500 focus:ring-4 focus:ring-blue-100/60"
+                    className={`h-12 w-full rounded-xl border bg-white pl-11 pr-12 text-sm text-slate-800 placeholder-slate-400 outline-none transition-all focus:ring-4 ${
+                      errors.confirmPassword ? 'border-red-500 focus:border-red-500 focus:ring-red-100/50' : 'border-slate-200 focus:border-blue-500 focus:ring-blue-100/60'
+                    }`}
                   />
                   <button
                     type="button"
@@ -279,6 +310,7 @@ export default function StoreRegisterPage({ onBack }) {
                     {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
                 </div>
+                {errors.confirmPassword && <span className="text-[10px] font-bold text-red-500 block mt-0.5">{errors.confirmPassword}</span>}
               </div>
 
               {/* Fila 4: Nombre de la Tienda / Marca */}
@@ -382,35 +414,47 @@ export default function StoreRegisterPage({ onBack }) {
               
               {/* Checkboxes de aceptación */}
               <div className="flex flex-col gap-3">
-                <label className="flex items-start gap-3 cursor-pointer select-none">
-                  <input
-                    type="checkbox"
-                    checked={acceptTerms}
-                    onChange={(e) => setAcceptTerms(e.target.checked)}
-                    className="mt-0.5 h-4 w-4 shrink-0 accent-blue-600 cursor-pointer"
-                  />
-                  <span className="text-xs text-slate-500 leading-normal">
-                    Acepto los{' '}
-                    <a href="#" className="text-blue-600 font-bold hover:underline">Términos y Condiciones de Uso</a>{' '}
-                    y la{' '}
-                    <a href="#" className="text-blue-600 font-bold hover:underline">Política de Tratamiento de Datos</a>{' '}
-                    de SADYA.
-                  </span>
-                </label>
+                <div className="flex flex-col gap-1">
+                  <label className="flex items-start gap-3 cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={acceptTerms}
+                      onChange={(e) => {
+                        setAcceptTerms(e.target.checked);
+                        setErrors((prev) => ({ ...prev, acceptTerms: '' }));
+                      }}
+                      className="mt-0.5 h-4 w-4 shrink-0 accent-blue-600 cursor-pointer"
+                    />
+                    <span className="text-xs text-slate-500 leading-normal">
+                      Acepto los{' '}
+                      <a href="#" className="text-blue-600 font-bold hover:underline">Términos y Condiciones de Uso</a>{' '}
+                      y la{' '}
+                      <a href="#" className="text-blue-600 font-bold hover:underline">Política de Tratamiento de Datos</a>{' '}
+                      de SADYA.
+                    </span>
+                  </label>
+                  {errors.acceptTerms && <span className="text-[10px] font-bold text-red-500 block">{errors.acceptTerms}</span>}
+                </div>
 
-                <label className="flex items-start gap-3 cursor-pointer select-none">
-                  <input
-                    type="checkbox"
-                    checked={acceptAgreement}
-                    onChange={(e) => setAcceptAgreement(e.target.checked)}
-                    className="mt-0.5 h-4 w-4 shrink-0 accent-blue-600 cursor-pointer"
-                  />
-                  <span className="text-xs text-slate-500 leading-normal">
-                    Acepto el{' '}
-                    <a href="#" className="text-blue-600 font-bold hover:underline">Acuerdo Comercial de Intermediación</a>{' '}
-                    para ventas de excedentes alimentarios dentro de la aplicación.
-                  </span>
-                </label>
+                <div className="flex flex-col gap-1">
+                  <label className="flex items-start gap-3 cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={acceptAgreement}
+                      onChange={(e) => {
+                        setAcceptAgreement(e.target.checked);
+                        setErrors((prev) => ({ ...prev, acceptAgreement: '' }));
+                      }}
+                      className="mt-0.5 h-4 w-4 shrink-0 accent-blue-600 cursor-pointer"
+                    />
+                    <span className="text-xs text-slate-500 leading-normal">
+                      Acepto el{' '}
+                      <a href="#" className="text-blue-600 font-bold hover:underline">Acuerdo Comercial de Intermediación</a>{' '}
+                      para ventas de excedentes alimentarios dentro de la aplicación.
+                    </span>
+                  </label>
+                  {errors.acceptAgreement && <span className="text-[10px] font-bold text-red-500 block">{errors.acceptAgreement}</span>}
+                </div>
               </div>
 
               {/* Error de API */}

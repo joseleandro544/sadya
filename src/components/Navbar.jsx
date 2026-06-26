@@ -30,10 +30,15 @@ export default function Navbar({
   onOpenFoundationRegister,
   onGoToHome,
   onSelectCategory,
-  onLogout
+  onLogout,
+  onOpenSellerProducts
 }) {
   const [isCategoriesAccordionOpen, setIsCategoriesAccordionOpen] = useState(false);
   const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
+  const [hasNotifications, setHasNotifications] = useState(() => {
+    const read = localStorage.getItem('sadya_read_notifications');
+    return read !== 'true';
+  });
 
   const categoryItems = [
     { id: 'all', name: 'Todos', icon: glowingStar, bgColor: 'bg-slate-100 hover:bg-slate-200 text-slate-700' },
@@ -50,6 +55,13 @@ export default function Navbar({
   const [isLocationModalOpen, setIsLocationModalOpen] = useState(false);
   const [tempLocation, setTempLocation] = useState(currentLocation);
   const [isRegisterDropdownOpen, setIsRegisterDropdownOpen] = useState(false);
+
+  const isSeller = user && (
+    user.rol === 'Campesino' || 
+    user.rol === 'Productor' || 
+    user.rol === 'Tienda' || 
+    user.rol === 'Tendero'
+  );
 
   const locations = [
     "📍 Calle 45 # 12-34, Bogotá",
@@ -137,13 +149,21 @@ export default function Navbar({
               </button>
 
               {/* Notifications */}
-              <button className="group flex flex-col items-center justify-center text-slate-600 hover:text-blue-600 transition-colors duration-200">
+              <button 
+                onClick={() => {
+                  setHasNotifications(false);
+                  localStorage.setItem('sadya_read_notifications', 'true');
+                }}
+                className="group flex flex-col items-center justify-center text-slate-600 hover:text-blue-600 transition-colors duration-200"
+              >
                 <div className="relative p-1">
                   <Bell className="h-5 w-5 transition-transform group-hover:scale-110" />
-                  <span className="absolute top-0 right-0 flex h-2 w-2">
-                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-75"></span>
-                    <span className="relative inline-flex h-2 w-2 rounded-full bg-red-500"></span>
-                  </span>
+                  {hasNotifications && (
+                    <span className="absolute top-0 right-0 flex h-2 w-2">
+                      <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-75"></span>
+                      <span className="relative inline-flex h-2 w-2 rounded-full bg-red-500"></span>
+                    </span>
+                  )}
                 </div>
                 <span className="text-[10px] font-medium mt-0.5 tracking-tight hidden md:block text-slate-500 group-hover:text-blue-600">
                   Notificaciones
@@ -189,6 +209,17 @@ export default function Navbar({
                     >
                       Mi Perfil
                     </button>
+                    {isSeller && (
+                      <button 
+                        onClick={() => {
+                          setIsUserDropdownOpen(false);
+                          if (onOpenSellerProducts) onOpenSellerProducts();
+                        }}
+                        className="w-full text-left rounded-xl px-3 py-2 text-xs font-bold text-blue-600 bg-blue-50/60 hover:bg-blue-100/80 transition-all duration-200 flex items-center gap-1.5 cursor-pointer"
+                      >
+                        📦 Mis Productos
+                      </button>
+                    )}
                     <button 
                       onClick={() => {
                         setIsUserDropdownOpen(false);
@@ -438,6 +469,18 @@ export default function Navbar({
 
                 {user ? (
                   <>
+                    {isSeller && (
+                      <button 
+                        onClick={() => {
+                          setIsMobileMenuOpen(false);
+                          if (onOpenSellerProducts) onOpenSellerProducts();
+                        }}
+                        className="w-full flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-bold text-blue-600 bg-blue-50 hover:bg-blue-100 hover:text-blue-700 transition-all duration-200 cursor-pointer"
+                      >
+                        <ShoppingBag className="h-5 w-5 text-blue-600" />
+                        <span>📦 Mis Productos</span>
+                      </button>
+                    )}
                     <button 
                       onClick={() => {
                         setIsMobileMenuOpen(false);

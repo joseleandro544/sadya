@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { ArrowLeft, MapPin, User, Phone, CheckCircle } from 'lucide-react';
 
-export default function FarmerRegisterPage({ onBack }) {
+export default function FarmerRegisterPage({ onBack, onRegisterSuccess }) {
   const [form, setForm] = useState({
     nombreCompleto: '',
     direccion: '',
@@ -9,7 +9,9 @@ export default function FarmerRegisterPage({ onBack }) {
   });
   
   const [errors, setErrors] = useState({
-    nombreCompleto: false
+    nombreCompleto: false,
+    telefono: '',
+    terms: ''
   });
 
   const [acceptTerms, setAcceptTerms] = useState(false);
@@ -20,6 +22,7 @@ export default function FarmerRegisterPage({ onBack }) {
   const handleChange = (field) => (e) => {
     const value = e.target.value;
     setForm((prev) => ({ ...prev, [field]: value }));
+    setErrors((prev) => ({ ...prev, [field]: '' }));
     
     if (field === 'nombreCompleto') {
       setErrors((prev) => ({ ...prev, nombreCompleto: value.trim() === '' }));
@@ -30,18 +33,24 @@ export default function FarmerRegisterPage({ onBack }) {
     e.preventDefault();
     setApiError('');
 
+    let hasError = false;
+    const newErrors = { nombreCompleto: false, telefono: '', terms: '' };
+
     if (form.nombreCompleto.trim() === '') {
-      setErrors((prev) => ({ ...prev, nombreCompleto: true }));
-      return;
+      newErrors.nombreCompleto = true;
+      hasError = true;
     }
     if (form.telefono.trim() === '') {
-      alert('El teléfono es obligatorio.');
-      return;
+      newErrors.telefono = 'El teléfono es obligatorio.';
+      hasError = true;
     }
     if (!acceptTerms) {
-      alert('Debes aceptar los Términos y Condiciones.');
-      return;
+      newErrors.terms = 'Debes aceptar los Términos y Condiciones.';
+      hasError = true;
     }
+
+    setErrors(newErrors);
+    if (hasError) return;
 
     setLoading(true);
 
@@ -64,7 +73,11 @@ export default function FarmerRegisterPage({ onBack }) {
         return;
       }
 
-      setSubmitted(true);
+      if (onRegisterSuccess) {
+        onRegisterSuccess(data.data, 'Productor', '¡Registro completado, Productor! Hemos guardado tu información.');
+      } else {
+        setSubmitted(true);
+      }
     } catch (err) {
       setApiError('No se pudo conectar con el servidor. Verifica que el backend esté corriendo.');
       setLoading(false);
@@ -197,6 +210,11 @@ export default function FarmerRegisterPage({ onBack }) {
                   className="h-12 flex-grow bg-white px-4 text-sm text-slate-800 placeholder-slate-400 outline-none"
                 />
               </div>
+              {errors.telefono && (
+                <span className="text-[10px] font-bold text-red-500 tracking-wide mt-0.5 block">
+                  {errors.telefono}
+                </span>
+              )}
             </div>
 
             {/* Términos y Botón */}
@@ -205,7 +223,10 @@ export default function FarmerRegisterPage({ onBack }) {
                 <input
                   type="checkbox"
                   checked={acceptTerms}
-                  onChange={(e) => setAcceptTerms(e.target.checked)}
+                  onChange={(e) => {
+                    setAcceptTerms(e.target.checked);
+                    setErrors((prev) => ({ ...prev, terms: '' }));
+                  }}
                   className="mt-0.5 h-4 w-4 shrink-0 accent-blue-600 cursor-pointer"
                 />
                 <span className="text-xs text-slate-500 leading-normal">
@@ -216,6 +237,11 @@ export default function FarmerRegisterPage({ onBack }) {
                   de la plataforma SADYA.
                 </span>
               </label>
+              {errors.terms && (
+                <span className="text-[10px] font-bold text-red-500 block">
+                  {errors.terms}
+                </span>
+              )}
 
               {/* Error de API */}
               {apiError && (

@@ -206,4 +206,133 @@ router.post('/auth/verify-otp', async (req, res) => {
   }
 });
 
+// ── POST /api/auth/social ───────────────────────────────
+// Login y Registro Social (Google, Apple, Facebook)
+router.post('/auth/social', async (req, res) => {
+  try {
+    const { email, nombres, apellidos, idSocial, metodoRegistro, rol } = req.body;
+
+    if (!idSocial || !metodoRegistro) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'El idSocial y metodoRegistro son obligatorios para inicio de sesión social.',
+      });
+    }
+
+    if (!email || !nombres) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'El correo electrónico y nombre son obligatorios.',
+      });
+    }
+
+    // 1. Buscar si ya existe el usuario con esa cuenta de red social vinculada
+    const socialUser = await query(
+      `SELECT u.id_usuario, u.nombres, u.apellidos, u.email, u.telefono, r.tipo_rol
+       FROM t_usuarios u
+       JOIN t_roles r ON u.id_rol = r.id_rol
+       WHERE u.id_social = $1 AND u.metodo_registro = $2
+       LIMIT 1`,
+      [idSocial, metodoRegistro]
+    );
+
+    if (socialUser.rows.length > 0) {
+      const user = socialUser.rows[0];
+      console.log(`✅ Login Social exitoso (${metodoRegistro}): ${user.nombres} ${user.apellidos || ''}`);
+      return res.status(200).json({
+        status: 'ok',
+        message: `¡Bienvenido de nuevo, ${user.nombres}!`,
+        data: {
+          id: user.id_usuario,
+          nombres: user.nombres,
+          apellidos: user.apellidos,
+          email: user.email,
+          telefono: user.telefono,
+          rol: user.tipo_rol,
+        },
+      });
+    }
+
+    // 2. Si no existe, revisar si el correo electrónico ya está registrado localmente
+    const emailUser = await query(
+      `SELECT u.id_usuario, u.nombres, u.apellidos, u.email, u.telefono, r.tipo_rol
+       FROM t_usuarios u
+       JOIN t_roles r ON u.id_rol = r.id_rol
+       WHERE u.email = $1
+       LIMIT 1`,
+      [email.trim().toLowerCase()]
+    );
+
+    if (emailUser.rows.length > 0) {
+      const user = emailUser.rows[0];
+      console.log(`🔗 Vinculando cuenta de ${metodoRegistro} a usuario existente con email: ${email}`);
+      
+      await query(
+        `UPDATE t_usuarios
+         SET id_social = $1, metodo_registro = $2
+         WHERE id_usuario = $3`,
+        [idSocial, metodoRegistro, user.id_usuario]
+      );
+
+      return res.status(200).json({
+        status: 'ok',
+        message: `¡Cuenta de ${metodoRegistro} vinculada con éxito! Bienvenido, ${user.nombres}.`,
+        data: {
+          id: user.id_usuario,
+          nombres: user.nombres,
+          apellidos: user.apellidos,
+          email: user.email,
+          telefono: user.telefono,
+          rol: user.tipo_rol,
+        },
+      });
+    }
+
+    // 3. Si no existe la vinculación social ni el correo, crear un nuevo usuario
+    let roleName = rol || 'Cliente';
+    let rolResult = await query(`SELECT id_rol FROM t_roles WHERE tipo_rol = $1 LIMIT 1`, [roleName]);
+    if (rolResult.rows.length === 0) {
+      rolResult = await query(`SELECT id_rol FROM t_roles WHERE tipo_rol ILIKE '%Cliente%' LIMIT 1`);
+    }
+    if (rolResult.rows.length === 0) {
+      return res.status(500).json({
+        status: 'error',
+        message: 'No se encontró el rol adecuado para registro social.',
+      });
+    }
+    const idRol = rolResult.rows[0].id_rol;
+
+    const userResult = await query(
+      `INSERT INTO t_usuarios (id_rol, nombres, apellidos, email, id_social, metodo_registro)
+       VALUES ($1, $2, $3, $4, $5, $6)
+       RETURNING id_usuario, nombres, apellidos, email, telefono`,
+      [idRol, nombres.trim(), apellidos?.trim() || null, email.trim().toLowerCase(), idSocial, metodoRegistro]
+    );
+
+    const newUser = userResult.rows[0];
+    console.log(`✅ Nuevo registro de usuario vía Social (${metodoRegistro}): ${newUser.nombres} (ID: ${newUser.id_usuario})`);
+
+    return res.status(201).json({
+      status: 'ok',
+      message: `¡Registro con ${metodoRegistro} exitoso! Bienvenido a SADYA.`,
+      data: {
+        id: newUser.id_usuario,
+        nombres: newUser.nombres,
+        apellidos: newUser.apellidos,
+        email: newUser.email,
+        telefono: newUser.telefono,
+        rol: roleName,
+      },
+    });
+
+  } catch (err) {
+    console.error('❌ Error en login/registro social:', err.message);
+    res.status(500).json({
+      status: 'error',
+      message: 'Error interno al procesar el inicio de sesión social.',
+      detail: err.message,
+    });
+  }
+});
+
 export default router;

@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { ArrowLeft, Eye, EyeOff, Phone, User, Mail, Lock, CheckCircle } from 'lucide-react';
+import SocialAuthModal from './SocialAuthModal';
+
 
 /* ─── Inline SVG Brand Icons ─── */
 const GoogleIcon = () => (
@@ -24,7 +26,7 @@ const AppleIcon = () => (
 );
 
 /* ─── Input Field Helper ─── */
-function InputField({ id, label, type = 'text', icon: Icon, placeholder, value, onChange, extra }) {
+function InputField({ id, label, type = 'text', icon: Icon, placeholder, value, onChange, extra, error }) {
   return (
     <div className="flex flex-col gap-1">
       <label htmlFor={id} className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
@@ -38,16 +40,19 @@ function InputField({ id, label, type = 'text', icon: Icon, placeholder, value, 
           placeholder={placeholder}
           value={value}
           onChange={onChange}
-          className={`w-full rounded-2xl border border-slate-200 bg-slate-50 py-3 pr-4 text-sm text-slate-800 placeholder-slate-400 outline-none transition-all duration-200 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-100/60 ${Icon ? 'pl-11' : 'pl-4'}`}
+          className={`w-full rounded-2xl border bg-slate-50 py-3 pr-4 text-sm text-slate-800 placeholder-slate-400 outline-none transition-all duration-200 focus:bg-white focus:ring-4 ${
+            error ? 'border-red-500 focus:border-red-500 focus:ring-red-100/60' : 'border-slate-200 focus:border-blue-500 focus:ring-blue-100/60'
+          } ${Icon ? 'pl-11' : 'pl-4'}`}
         />
         {extra}
       </div>
+      {error && <span className="text-[10px] font-bold text-red-500 mt-0.5 block">{error}</span>}
     </div>
   );
 }
 
 /* ─── Main Component ─── */
-export default function RegisterPage({ onBack }) {
+export default function RegisterPage({ onBack, onRegisterSuccess, onOpenLogin }) {
   const [form, setForm] = useState({
     nombre: '',
     apellido: '',
@@ -58,30 +63,81 @@ export default function RegisterPage({ onBack }) {
     genero: '',
     terminos: false,
   });
+  const [errors, setErrors] = useState({
+    password: '',
+    confirmPassword: '',
+    terminos: '',
+  });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [apiError, setApiError] = useState('');
 
-  const set = (field) => (e) =>
-    setForm((prev) => ({ ...prev, [field]: e.target.type === 'checkbox' ? e.target.checked : e.target.value }));
+  // Social Auth Modal states
+  const [isSocialModalOpen, setIsSocialModalOpen] = useState(false);
+  const [socialProvider, setSocialProvider] = useState('Google');
+
+  const handleSocialSuccess = async (socialData) => {
+    setIsSocialModalOpen(false);
+    setApiError('');
+    setLoading(true);
+    try {
+      const res = await fetch('/api/auth/social', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...socialData, rol: 'Cliente' })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setApiError(data.message || 'Error en la autenticación social.');
+        setLoading(false);
+        return;
+      }
+      setLoading(false);
+      if (onRegisterSuccess) {
+        onRegisterSuccess(data.data, 'Cliente', data.message);
+      } else {
+        setSubmitted(true);
+      }
+    } catch (err) {
+      setApiError('No se pudo conectar con el servidor.');
+      setLoading(false);
+    }
+  };
+
+  const set = (field) => (e) => {
+    const val = e.target.type === 'checkbox' ? e.target.checked : e.target.value;
+    setForm((prev) => ({ ...prev, [field]: val }));
+    setErrors((prev) => ({ ...prev, [field]: '' }));
+    if (field === 'password' || field === 'confirmPassword') {
+      setErrors((prev) => ({ ...prev, password: '', confirmPassword: '' }));
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setApiError('');
-    if (form.password !== form.confirmPassword) {
-      alert('Las contraseñas no coinciden.');
-      return;
-    }
+    
+    let hasError = false;
+    const newErrors = { password: '', confirmPassword: '', terminos: '' };
+
     if (form.password.length < 8) {
-      alert('La contraseña debe tener mínimo 8 caracteres.');
-      return;
+      newErrors.password = 'La contraseña debe tener mínimo 8 caracteres.';
+      hasError = true;
+    }
+    if (form.password !== form.confirmPassword) {
+      newErrors.confirmPassword = 'Las contraseñas no coinciden.';
+      hasError = true;
     }
     if (!form.terminos) {
-      alert('Debes aceptar los Términos y Condiciones.');
-      return;
+      newErrors.terminos = 'Debes aceptar los Términos y Condiciones.';
+      hasError = true;
     }
+
+    setErrors(newErrors);
+    if (hasError) return;
+
     setLoading(true);
     try {
       const res = await fetch('/api/register/client', {
@@ -102,7 +158,12 @@ export default function RegisterPage({ onBack }) {
         setLoading(false);
         return;
       }
-      setSubmitted(true);
+      setLoading(false);
+      if (onRegisterSuccess) {
+        onRegisterSuccess({ ...data.data, email: form.email, telefono: form.celular }, 'Cliente', '¡Bienvenido/a a SADYA! Tu cuenta de cliente ha sido creada.');
+      } else {
+        setSubmitted(true);
+      }
     } catch (err) {
       setApiError('No se pudo conectar con el servidor.');
       setLoading(false);
@@ -218,6 +279,7 @@ export default function RegisterPage({ onBack }) {
               placeholder="Mínimo 8 caracteres"
               value={form.password}
               onChange={set('password')}
+              error={errors.password}
               extra={
                 <button
                   type="button"
@@ -238,6 +300,7 @@ export default function RegisterPage({ onBack }) {
               placeholder="Repite tu contraseña"
               value={form.confirmPassword}
               onChange={set('confirmPassword')}
+              error={errors.confirmPassword}
               extra={
                 <button
                   type="button"
@@ -270,21 +333,24 @@ export default function RegisterPage({ onBack }) {
             </div>
 
             {/* Términos */}
-            <label className="flex items-start gap-3 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={form.terminos}
-                onChange={set('terminos')}
-                className="mt-0.5 h-4 w-4 shrink-0 accent-blue-600"
-              />
-              <span className="text-xs text-slate-500 leading-relaxed">
-                Acepto los{' '}
-                <a href="#" className="text-blue-600 font-semibold hover:underline">Términos y Condiciones</a>{' '}
-                y la{' '}
-                <a href="#" className="text-blue-600 font-semibold hover:underline">Política de Privacidad</a>{' '}
-                de SADYA.
-              </span>
-            </label>
+            <div className="flex flex-col gap-1">
+              <label className="flex items-start gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={form.terminos}
+                  onChange={set('terminos')}
+                  className="mt-0.5 h-4 w-4 shrink-0 accent-blue-600"
+                />
+                <span className="text-xs text-slate-500 leading-relaxed">
+                  Acepto los{' '}
+                  <a href="#" className="text-blue-600 font-semibold hover:underline">Términos y Condiciones</a>{' '}
+                  y la{' '}
+                  <a href="#" className="text-blue-600 font-semibold hover:underline">Política de Privacidad</a>{' '}
+                  de SADYA.
+                </span>
+              </label>
+              {errors.terminos && <span className="text-[10px] font-bold text-red-500 block">{errors.terminos}</span>}
+            </div>
 
             {/* Error de API */}
             {apiError && (
@@ -307,7 +373,11 @@ export default function RegisterPage({ onBack }) {
             {/* Ya tengo cuenta */}
             <p className="text-center text-xs text-slate-500 pb-2">
               ¿Ya tienes cuenta?{' '}
-              <button type="button" className="text-blue-600 font-bold hover:underline">
+              <button
+                type="button"
+                onClick={onOpenLogin}
+                className="text-blue-600 font-bold hover:underline cursor-pointer"
+              >
                 Inicia sesión aquí
               </button>
             </p>
@@ -336,8 +406,12 @@ export default function RegisterPage({ onBack }) {
 
               {/* Google */}
               <button
-                onClick={() => alert('Registro con Google próximamente.')}
-                className="flex items-center w-full bg-blue-600 hover:bg-blue-700 text-white rounded-full py-3.5 px-5 shadow-md shadow-blue-100 transition-all duration-200 hover:scale-105 active:scale-95 gap-3"
+                type="button"
+                onClick={() => {
+                  setSocialProvider('Google');
+                  setIsSocialModalOpen(true);
+                }}
+                className="flex items-center w-full bg-blue-600 hover:bg-blue-700 text-white rounded-full py-3.5 px-5 shadow-md shadow-blue-100 transition-all duration-200 hover:scale-105 active:scale-95 gap-3 cursor-pointer"
               >
                 <div className="h-7 w-7 rounded-full bg-white flex items-center justify-center shrink-0">
                   <GoogleIcon />
@@ -349,8 +423,9 @@ export default function RegisterPage({ onBack }) {
 
               {/* Celular */}
               <button
+                type="button"
                 onClick={() => alert('Registro con Celular próximamente.')}
-                className="flex items-center w-full bg-emerald-500 hover:bg-emerald-600 text-white rounded-full py-3.5 px-5 shadow-md shadow-emerald-100 transition-all duration-200 hover:scale-105 active:scale-95 gap-3"
+                className="flex items-center w-full bg-emerald-500 hover:bg-emerald-600 text-white rounded-full py-3.5 px-5 shadow-md shadow-emerald-100 transition-all duration-200 hover:scale-105 active:scale-95 gap-3 cursor-pointer"
               >
                 <Phone className="h-5 w-5 shrink-0" />
                 <span className="text-xs font-extrabold tracking-wider uppercase flex-1 text-center">
@@ -360,8 +435,12 @@ export default function RegisterPage({ onBack }) {
 
               {/* Facebook */}
               <button
-                onClick={() => alert('Registro con Facebook próximamente.')}
-                className="flex items-center w-full bg-[#1877F2] hover:bg-[#166fe5] text-white rounded-full py-3.5 px-5 shadow-md shadow-blue-100/50 transition-all duration-200 hover:scale-105 active:scale-95 gap-3"
+                type="button"
+                onClick={() => {
+                  setSocialProvider('Facebook');
+                  setIsSocialModalOpen(true);
+                }}
+                className="flex items-center w-full bg-[#1877F2] hover:bg-[#166fe5] text-white rounded-full py-3.5 px-5 shadow-md shadow-blue-100/50 transition-all duration-200 hover:scale-105 active:scale-95 gap-3 cursor-pointer"
               >
                 <FacebookIcon />
                 <span className="text-xs font-extrabold tracking-wider uppercase flex-1 text-center">
@@ -371,8 +450,12 @@ export default function RegisterPage({ onBack }) {
 
               {/* Apple */}
               <button
-                onClick={() => alert('Registro con Apple próximamente.')}
-                className="flex items-center w-full bg-black hover:bg-slate-800 text-white rounded-full py-3.5 px-5 shadow-md shadow-slate-300/20 transition-all duration-200 hover:scale-105 active:scale-95 gap-3"
+                type="button"
+                onClick={() => {
+                  setSocialProvider('Apple');
+                  setIsSocialModalOpen(true);
+                }}
+                className="flex items-center w-full bg-black hover:bg-slate-800 text-white rounded-full py-3.5 px-5 shadow-md shadow-slate-300/20 transition-all duration-200 hover:scale-105 active:scale-95 gap-3 cursor-pointer"
               >
                 <AppleIcon />
                 <span className="text-xs font-extrabold tracking-wider uppercase flex-1 text-center">
@@ -383,8 +466,9 @@ export default function RegisterPage({ onBack }) {
               {/* Outlined — Ya tengo cuenta */}
               <div className="h-px bg-slate-100 my-1" />
               <button
-                onClick={() => alert('Inicio de sesión próximamente.')}
-                className="flex items-center justify-center w-full bg-white border-2 border-green-400 text-emerald-600 hover:bg-emerald-50/60 rounded-full py-3.5 px-5 transition-all duration-200 hover:scale-105 active:scale-95"
+                type="button"
+                onClick={onOpenLogin}
+                className="flex items-center justify-center w-full bg-white border-2 border-green-400 text-emerald-600 hover:bg-emerald-50/60 rounded-full py-3.5 px-5 transition-all duration-200 hover:scale-105 active:scale-95 cursor-pointer"
               >
                 <span className="text-xs font-black tracking-wider uppercase">
                   Ya tengo cuenta
@@ -404,6 +488,14 @@ export default function RegisterPage({ onBack }) {
           </div>
         </div>
       </div>
+
+      {/* Social Auth Modal */}
+      <SocialAuthModal
+        isOpen={isSocialModalOpen}
+        onClose={() => setIsSocialModalOpen(false)}
+        provider={socialProvider}
+        onSuccess={handleSocialSuccess}
+      />
     </div>
   );
 }

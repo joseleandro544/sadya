@@ -12,7 +12,7 @@ const CITIES = [
   "Santa Marta"
 ];
 
-export default function DelivererRegisterPage({ onBack }) {
+export default function DelivererRegisterPage({ onBack, onRegisterSuccess }) {
   const [form, setForm] = useState({
     nombre: '',
     apellido: '',
@@ -40,9 +40,20 @@ export default function DelivererRegisterPage({ onBack }) {
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [apiError, setApiError] = useState('');
+  const [errors, setErrors] = useState({
+    password: '',
+    ciudad: '',
+    noDocumento: '',
+    direccion: '',
+    vehiculo: '',
+    acceptTerms: '',
+    otp: '',
+    uploads: ''
+  });
 
   const handleChange = (field) => (e) => {
     setForm((prev) => ({ ...prev, [field]: e.target.value }));
+    setErrors((prev) => ({ ...prev, [field]: '' }));
   };
 
   const handleOtpChange = (index, value) => {
@@ -51,6 +62,7 @@ export default function DelivererRegisterPage({ onBack }) {
       const newOtp = [...otp];
       newOtp[index] = value;
       setOtp(newOtp);
+      setErrors((prev) => ({ ...prev, otp: '' }));
       
       // Auto focus next input
       if (value !== '' && index < 5) {
@@ -68,26 +80,46 @@ export default function DelivererRegisterPage({ onBack }) {
 
   const handleRegisterClick = (e) => {
     e.preventDefault();
+    let hasError = false;
+    const newErrors = {
+      password: '',
+      ciudad: '',
+      noDocumento: '',
+      direccion: '',
+      vehiculo: '',
+      acceptTerms: '',
+      otp: '',
+      uploads: ''
+    };
+
+    if (form.password.length < 8) {
+      newErrors.password = 'La contraseña debe tener un mínimo de 8 caracteres.';
+      hasError = true;
+    }
     if (!form.ciudad) {
-      alert('Por favor selecciona tu ciudad.');
-      return;
+      newErrors.ciudad = 'Por favor selecciona tu ciudad.';
+      hasError = true;
     }
     if (!form.noDocumento || !form.noDocumento.trim()) {
-      alert('Por favor ingresa tu número de documento.');
-      return;
+      newErrors.noDocumento = 'Por favor ingresa tu número de documento.';
+      hasError = true;
     }
     if (!form.direccion || !form.direccion.trim()) {
-      alert('Por favor ingresa tu dirección de residencia.');
-      return;
+      newErrors.direccion = 'Por favor ingresa tu dirección de residencia.';
+      hasError = true;
     }
     if (!form.vehiculo) {
-      alert('Por favor selecciona tu tipo de vehículo.');
-      return;
+      newErrors.vehiculo = 'Por favor selecciona tu tipo de vehículo.';
+      hasError = true;
     }
     if (!acceptTerms) {
-      alert('Debes aceptar los Términos y Condiciones.');
-      return;
+      newErrors.acceptTerms = 'Debes aceptar los Términos y Condiciones.';
+      hasError = true;
     }
+
+    setErrors(newErrors);
+    if (hasError) return;
+
     // Open KYC Modal
     setIsKycOpen(true);
     setKycStep(1);
@@ -96,18 +128,20 @@ export default function DelivererRegisterPage({ onBack }) {
   const handleValidateOtp = () => {
     // Check if OTP is fully entered
     if (otp.some(digit => digit === '')) {
-      alert('Por favor ingresa el código completo de 6 dígitos.');
+      setErrors((prev) => ({ ...prev, otp: 'Por favor ingresa el código completo de 6 dígitos.' }));
       return;
     }
+    setErrors((prev) => ({ ...prev, otp: '' }));
     // Proceed to Step 2
     setKycStep(2);
   };
 
   const handleFinalSubmit = async () => {
     if (!cedulaUploaded || !selfieUploaded) {
-      alert('Por favor sube ambos archivos requeridos para continuar.');
+      setErrors((prev) => ({ ...prev, uploads: 'Por favor sube ambos archivos requeridos para continuar.' }));
       return;
     }
+    setErrors((prev) => ({ ...prev, uploads: '' }));
     setLoading(true);
     setApiError('');
     try {
@@ -133,7 +167,12 @@ export default function DelivererRegisterPage({ onBack }) {
         return;
       }
       setIsKycOpen(false);
-      setSubmitted(true);
+      setLoading(false);
+      if (onRegisterSuccess) {
+        onRegisterSuccess({ ...data.data, email: form.email, telefono: form.whatsapp }, 'Domiciliario', '¡Domiciliario registrado con éxito! Tu perfil de domiciliario ha sido creado y está en revisión.');
+      } else {
+        setSubmitted(true);
+      }
     } catch (err) {
       setApiError('No se pudo conectar con el servidor.');
       setLoading(false);
@@ -264,13 +303,16 @@ export default function DelivererRegisterPage({ onBack }) {
                   required
                   value={form.ciudad}
                   onChange={handleChange('ciudad')}
-                  className="h-12 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm text-slate-800 outline-none transition-all focus:border-blue-500 focus:ring-4 focus:ring-blue-100/60 cursor-pointer"
+                  className={`h-12 w-full rounded-xl border bg-white px-4 text-sm text-slate-800 outline-none transition-all focus:ring-4 cursor-pointer ${
+                    errors.ciudad ? 'border-red-500 focus:border-red-500 focus:ring-red-100/50' : 'border-slate-200 focus:border-blue-500 focus:ring-blue-100/60'
+                  }`}
                 >
                   <option value="" disabled>Selecciona tu ciudad</option>
                   {CITIES.map(c => (
                     <option key={c} value={c.toLowerCase()}>{c}</option>
                   ))}
                 </select>
+                {errors.ciudad && <span className="text-[10px] font-bold text-red-500 block mt-0.5">{errors.ciudad}</span>}
               </div>
 
               {/* Fila 3: WhatsApp (+57) */}
@@ -308,7 +350,9 @@ export default function DelivererRegisterPage({ onBack }) {
                     placeholder="Mínimo 8 caracteres"
                     value={form.password}
                     onChange={handleChange('password')}
-                    className="h-12 w-full rounded-xl border border-slate-200 bg-white pl-11 pr-12 text-sm text-slate-800 placeholder-slate-400 outline-none transition-all focus:border-blue-500 focus:ring-4 focus:ring-blue-100/60"
+                    className={`h-12 w-full rounded-xl border bg-white pl-11 pr-12 text-sm text-slate-800 placeholder-slate-400 outline-none transition-all focus:ring-4 ${
+                      errors.password ? 'border-red-500 focus:border-red-500 focus:ring-red-100/50' : 'border-slate-200 focus:border-blue-500 focus:ring-blue-100/60'
+                    }`}
                   />
                   <button
                     type="button"
@@ -318,6 +362,7 @@ export default function DelivererRegisterPage({ onBack }) {
                     {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
                 </div>
+                {errors.password && <span className="text-[10px] font-bold text-red-500 block mt-0.5">{errors.password}</span>}
               </div>
 
               {/* Fila 4: Número de Documento / Cédula */}
@@ -332,8 +377,11 @@ export default function DelivererRegisterPage({ onBack }) {
                   placeholder="Ej: 10203040"
                   value={form.noDocumento}
                   onChange={handleChange('noDocumento')}
-                  className="h-12 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm text-slate-800 placeholder-slate-400 outline-none transition-all focus:border-blue-500 focus:ring-4 focus:ring-blue-100/60"
+                  className={`h-12 w-full rounded-xl border bg-white px-4 text-sm text-slate-800 placeholder-slate-400 outline-none transition-all focus:ring-4 ${
+                    errors.noDocumento ? 'border-red-500 focus:border-red-500 focus:ring-red-100/50' : 'border-slate-200 focus:border-blue-500 focus:ring-blue-100/60'
+                  }`}
                 />
+                {errors.noDocumento && <span className="text-[10px] font-bold text-red-500 block mt-0.5">{errors.noDocumento}</span>}
               </div>
 
               {/* Fila 4: Dirección de Residencia */}
@@ -348,8 +396,11 @@ export default function DelivererRegisterPage({ onBack }) {
                   placeholder="Ej: Calle 10 # 5-60"
                   value={form.direccion}
                   onChange={handleChange('direccion')}
-                  className="h-12 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm text-slate-800 placeholder-slate-400 outline-none transition-all focus:border-blue-500 focus:ring-4 focus:ring-blue-100/60"
+                  className={`h-12 w-full rounded-xl border bg-white px-4 text-sm text-slate-800 placeholder-slate-400 outline-none transition-all focus:ring-4 ${
+                    errors.direccion ? 'border-red-500 focus:border-red-500 focus:ring-red-100/50' : 'border-slate-200 focus:border-blue-500 focus:ring-blue-100/60'
+                  }`}
                 />
+                {errors.direccion && <span className="text-[10px] font-bold text-red-500 block mt-0.5">{errors.direccion}</span>}
               </div>
 
               {/* Fila 4: Tipo de Vehículo */}
@@ -362,13 +413,16 @@ export default function DelivererRegisterPage({ onBack }) {
                   required
                   value={form.vehiculo}
                   onChange={handleChange('vehiculo')}
-                  className="h-12 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm text-slate-800 outline-none transition-all focus:border-blue-500 focus:ring-4 focus:ring-blue-100/60 cursor-pointer"
+                  className={`h-12 w-full rounded-xl border bg-white px-4 text-sm text-slate-800 outline-none transition-all focus:ring-4 cursor-pointer ${
+                    errors.vehiculo ? 'border-red-500 focus:border-red-500 focus:ring-red-100/50' : 'border-slate-200 focus:border-blue-500 focus:ring-blue-100/60'
+                  }`}
                 >
                   <option value="" disabled>Selecciona tu vehículo</option>
                   <option value="moto">Moto / Bicicleta</option>
                   <option value="carro">Automóvil</option>
                   <option value="camion">Camión de carga</option>
                 </select>
+                {errors.vehiculo && <span className="text-[10px] font-bold text-red-500 block mt-0.5">{errors.vehiculo}</span>}
               </div>
 
             </div>
@@ -376,21 +430,27 @@ export default function DelivererRegisterPage({ onBack }) {
             {/* Fila Inferior: Checkbox y Botón */}
             <div className="flex flex-col gap-4 mt-3 border-t border-slate-100 pt-5">
               
-              <label className="flex items-start gap-3 cursor-pointer select-none">
-                <input
-                  type="checkbox"
-                  checked={acceptTerms}
-                  onChange={(e) => setAcceptTerms(e.target.checked)}
-                  className="mt-0.5 h-4 w-4 shrink-0 accent-blue-600 cursor-pointer"
-                />
-                <span className="text-xs text-slate-500 leading-normal">
-                  Acepto los{' '}
-                  <a href="#" className="text-blue-600 font-bold hover:underline">Términos y Condiciones de uso</a>{' '}
-                  y las{' '}
-                  <a href="#" className="text-blue-600 font-bold hover:underline">Políticas de Privacidad y de Seguridad KYC</a>{' '}
-                  para transportadores colaboradores de SADYA.
-                </span>
-              </label>
+              <div className="flex flex-col gap-1">
+                <label className="flex items-start gap-3 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={acceptTerms}
+                    onChange={(e) => {
+                      setAcceptTerms(e.target.checked);
+                      setErrors((prev) => ({ ...prev, acceptTerms: '' }));
+                    }}
+                    className="mt-0.5 h-4 w-4 shrink-0 accent-blue-600 cursor-pointer"
+                  />
+                  <span className="text-xs text-slate-500 leading-normal">
+                    Acepto los{' '}
+                    <a href="#" className="text-blue-600 font-bold hover:underline">Términos y Condiciones de uso</a>{' '}
+                    y las{' '}
+                    <a href="#" className="text-blue-600 font-bold hover:underline">Políticas de Privacidad y de Seguridad KYC</a>{' '}
+                    para transportadores colaboradores de SADYA.
+                  </span>
+                </label>
+                {errors.acceptTerms && <span className="text-[10px] font-bold text-red-500 block">{errors.acceptTerms}</span>}
+              </div>
 
               {/* Botón Principal (Verde Esmeralda) */}
               <button
@@ -438,10 +498,13 @@ export default function DelivererRegisterPage({ onBack }) {
                       value={digit}
                       onChange={(e) => handleOtpChange(idx, e.target.value)}
                       onKeyDown={(e) => handleOtpKeyDown(idx, e)}
-                      className="h-12 w-10 sm:w-11 text-center font-extrabold text-lg rounded-xl border border-slate-200 outline-none transition-all focus:border-blue-500 focus:ring-4 focus:ring-blue-100/50 bg-slate-50 focus:bg-white"
+                      className={`h-12 w-10 sm:w-11 text-center font-extrabold text-lg rounded-xl border outline-none transition-all focus:ring-4 focus:ring-blue-100/50 bg-slate-50 focus:bg-white ${
+                        errors.otp ? 'border-red-500 focus:border-red-500' : 'border-slate-200 focus:border-blue-500'
+                      }`}
                     />
                   ))}
                 </div>
+                {errors.otp && <span className="text-xs font-bold text-red-500 block mb-4 text-center">{errors.otp}</span>}
 
                 {/* Actions */}
                 <div className="flex flex-col gap-2 w-full mt-2">
@@ -454,8 +517,8 @@ export default function DelivererRegisterPage({ onBack }) {
                   <button
                     onClick={() => {
                       setOtp(['', '', '', '', '', '']);
-                      otpRefs[0].current.focus();
-                      alert('Código reenviado.');
+                      setErrors((prev) => ({ ...prev, otp: 'Código reenviado a tu WhatsApp.' }));
+                      if (otpRefs[0].current) otpRefs[0].current.focus();
                     }}
                     className="text-xs font-bold text-slate-500 hover:text-slate-800 transition-colors py-2"
                   >
@@ -485,7 +548,10 @@ export default function DelivererRegisterPage({ onBack }) {
                     </span>
                     <button
                       type="button"
-                      onClick={() => setCedulaUploaded(true)}
+                      onClick={() => {
+                        setCedulaUploaded(true);
+                        setErrors((prev) => ({ ...prev, uploads: '' }));
+                      }}
                       className={`h-28 w-full border-2 border-dashed rounded-2xl flex flex-col items-center justify-center p-4 transition-all ${
                         cedulaUploaded
                           ? 'border-emerald-500 bg-emerald-50/40 text-emerald-800 font-semibold'
@@ -514,7 +580,10 @@ export default function DelivererRegisterPage({ onBack }) {
                     </span>
                     <button
                       type="button"
-                      onClick={() => setSelfieUploaded(true)}
+                      onClick={() => {
+                        setSelfieUploaded(true);
+                        setErrors((prev) => ({ ...prev, uploads: '' }));
+                      }}
                       className={`h-28 w-full border-2 border-dashed rounded-2xl flex flex-col items-center justify-center p-4 transition-all ${
                         selfieUploaded
                           ? 'border-emerald-500 bg-emerald-50/40 text-emerald-800 font-semibold'
@@ -538,9 +607,11 @@ export default function DelivererRegisterPage({ onBack }) {
 
                 </div>
 
+                {errors.uploads && <span className="text-xs font-bold text-red-500 block mb-3 text-center">{errors.uploads}</span>}
+
                 {/* Error de API */}
                 {apiError && (
-                  <div className="flex items-center gap-2 bg-red-50 border border-red-100 text-red-600 rounded-xl p-3 text-xs font-semibold">
+                  <div className="flex items-center gap-2 bg-red-50 border border-red-100 text-red-600 rounded-xl p-3 text-xs font-semibold mb-3">
                     <span>⚠️</span><span>{apiError}</span>
                   </div>
                 )}

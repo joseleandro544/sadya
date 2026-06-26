@@ -35,7 +35,7 @@ const COLOMBIAN_CITIES = [
   "Soacha (Cundinamarca)"
 ];
 
-export default function MerchantRegisterPage({ onBack }) {
+export default function MerchantRegisterPage({ onBack, onRegisterSuccess }) {
   const [form, setForm] = useState({
     nombreTienda: '',
     nitOrRut: '',
@@ -54,6 +54,11 @@ export default function MerchantRegisterPage({ onBack }) {
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [apiError, setApiError] = useState('');
+  const [errors, setErrors] = useState({
+    selectedCity: '',
+    nitOrRut: '',
+    password: ''
+  });
 
   const cityDropdownRef = useRef(null);
 
@@ -70,6 +75,7 @@ export default function MerchantRegisterPage({ onBack }) {
 
   const handleChange = (field) => (e) => {
     setForm((prev) => ({ ...prev, [field]: e.target.value }));
+    setErrors((prev) => ({ ...prev, [field]: '' }));
   };
 
   const filteredCities = COLOMBIAN_CITIES.filter((city) =>
@@ -79,18 +85,25 @@ export default function MerchantRegisterPage({ onBack }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setApiError('');
+    let hasError = false;
+    const newErrors = { selectedCity: '', nitOrRut: '', password: '' };
+
     if (!selectedCity) {
-      alert('Por favor selecciona tu Ciudad / Municipio.');
-      return;
+      newErrors.selectedCity = 'Por favor selecciona tu Ciudad / Municipio.';
+      hasError = true;
     }
     if (!form.nitOrRut.trim()) {
-      alert('El NIT o RUT es obligatorio para registrar tu establecimiento.');
-      return;
+      newErrors.nitOrRut = 'El NIT o RUT es obligatorio para registrar tu establecimiento.';
+      hasError = true;
     }
     if (!form.password.trim() || form.password.length < 8) {
-      alert('La contraseña debe tener mínimo 8 caracteres.');
-      return;
+      newErrors.password = 'La contraseña debe tener mínimo 8 caracteres.';
+      hasError = true;
     }
+
+    setErrors(newErrors);
+    if (hasError) return;
+
     setLoading(true);
     try {
       const res = await fetch('/api/register/merchant', {
@@ -114,7 +127,12 @@ export default function MerchantRegisterPage({ onBack }) {
         setLoading(false);
         return;
       }
-      setSubmitted(true);
+      setLoading(false);
+      if (onRegisterSuccess) {
+        onRegisterSuccess({ ...data.data, email: form.email, telefono: form.celular }, 'Tienda', '¡Comercio registrado con éxito! Los datos de ' + form.nombreTienda + ' han sido registrados.');
+      } else {
+        setSubmitted(true);
+      }
     } catch (err) {
       setApiError('No se pudo conectar con el servidor.');
       setLoading(false);
@@ -212,7 +230,9 @@ export default function MerchantRegisterPage({ onBack }) {
                       id="city-input"
                       type="button"
                       onClick={() => setIsCityDropdownOpen(!isCityDropdownOpen)}
-                      className="h-12 w-full rounded-xl border border-slate-200 bg-white px-4 text-left text-sm text-slate-800 placeholder-slate-400 outline-none flex items-center justify-between transition-all focus:border-blue-500 focus:ring-4 focus:ring-blue-100/60"
+                      className={`h-12 w-full rounded-xl border bg-white px-4 text-left text-sm text-slate-800 placeholder-slate-400 outline-none flex items-center justify-between transition-all focus:ring-4 ${
+                        errors.selectedCity ? 'border-red-500 focus:border-red-500 focus:ring-red-100/50' : 'border-slate-200 focus:border-blue-500 focus:ring-blue-100/60'
+                      }`}
                     >
                       <span className={selectedCity ? 'font-semibold text-slate-800' : 'text-slate-400'}>
                         {selectedCity || "Selecciona o busca tu ciudad..."}
@@ -240,6 +260,7 @@ export default function MerchantRegisterPage({ onBack }) {
                               type="button"
                               onClick={() => {
                                 setSelectedCity(city);
+                                setErrors((prev) => ({ ...prev, selectedCity: '' }));
                                 setIsCityDropdownOpen(false);
                                 setCitySearch('');
                               }}
@@ -254,6 +275,7 @@ export default function MerchantRegisterPage({ onBack }) {
                       </div>
                     )}
                   </div>
+                  {errors.selectedCity && <span className="text-[10px] font-bold text-red-500 block mt-0.5">{errors.selectedCity}</span>}
                 </div>
               </div>
             </div>
@@ -295,8 +317,11 @@ export default function MerchantRegisterPage({ onBack }) {
                     placeholder="Ej: 900.123.456-7"
                     value={form.nitOrRut}
                     onChange={handleChange('nitOrRut')}
-                    className="h-12 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm text-slate-800 placeholder-slate-400 outline-none transition-all focus:border-blue-500 focus:ring-4 focus:ring-blue-100/60"
+                    className={`h-12 w-full rounded-xl border bg-white px-4 text-sm text-slate-800 placeholder-slate-400 outline-none transition-all focus:ring-4 ${
+                      errors.nitOrRut ? 'border-red-500 focus:border-red-500 focus:ring-red-100/50' : 'border-slate-200 focus:border-blue-500 focus:ring-blue-100/60'
+                    }`}
                   />
+                  {errors.nitOrRut && <span className="text-[10px] font-bold text-red-500 block mt-0.5">{errors.nitOrRut}</span>}
                 </div>
 
                 {/* Dirección Comercial */}
@@ -416,7 +441,9 @@ export default function MerchantRegisterPage({ onBack }) {
                       placeholder="Mínimo 8 caracteres"
                       value={form.password}
                       onChange={handleChange('password')}
-                      className="h-12 w-full rounded-xl border border-slate-200 bg-white pl-11 pr-12 text-sm text-slate-800 placeholder-slate-400 outline-none transition-all focus:border-blue-500 focus:ring-4 focus:ring-blue-100/60"
+                      className={`h-12 w-full rounded-xl border bg-white pl-11 pr-12 text-sm text-slate-800 placeholder-slate-400 outline-none transition-all focus:ring-4 ${
+                        errors.password ? 'border-red-500 focus:border-red-500 focus:ring-red-100/50' : 'border-slate-200 focus:border-blue-500 focus:ring-blue-100/60'
+                      }`}
                     />
                     <button
                       type="button"
@@ -426,6 +453,7 @@ export default function MerchantRegisterPage({ onBack }) {
                       {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </button>
                   </div>
+                  {errors.password && <span className="text-[10px] font-bold text-red-500 block mt-0.5">{errors.password}</span>}
                 </div>
               </div>
             </div>

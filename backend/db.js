@@ -39,5 +39,19 @@ pool.on('connect', () => {
 // Uso: const { rows } = await query('SELECT * FROM tabla WHERE id = $1', [id]);
 export const query = (text, params) => pool.query(text, params);
 
+// ── Migración de Esquema Auto-ejecutable ──────────────────
+(async () => {
+  try {
+    await pool.query(`
+      ALTER TABLE t_productos 
+      ADD COLUMN IF NOT EXISTS descripcion text,
+      ADD COLUMN IF NOT EXISTS imagen_url varchar;
+    `);
+    console.log('🟢 Columnas de base de datos validadas/actualizadas en t_productos');
+  } catch (err) {
+    console.error('⚠️  Error al verificar/actualizar columnas en t_productos:', err.message);
+  }
+})();
+
 // Exportar el pool por si se necesita acceso directo (transacciones, etc.)
 export default pool;

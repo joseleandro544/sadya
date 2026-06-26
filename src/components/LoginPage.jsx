@@ -1,5 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { Eye, EyeOff, ArrowLeft, ShieldAlert, Phone, X } from 'lucide-react';
+import SocialAuthModal from './SocialAuthModal';
+
 
 export default function LoginPage({ onBack, onOpenRegister, onLoginSuccess }) {
   // Auth mode: 'password' | 'code'
@@ -17,16 +19,46 @@ export default function LoginPage({ onBack, onOpenRegister, onLoginSuccess }) {
   // Code mode
   const [celular, setCelular] = useState('');
 
+  // Social Auth Modal states
+  const [isSocialModalOpen, setIsSocialModalOpen] = useState(false);
+  const [socialProvider, setSocialProvider] = useState('Google');
+
+  const handleSocialSuccess = async (socialData) => {
+    setIsSocialModalOpen(false);
+    setError('');
+    setLoading(true);
+    try {
+      const res = await fetch('/api/auth/social', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(socialData)
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.message || 'Error en la autenticación social.');
+        setLoading(false);
+        return;
+      }
+      setLoading(false);
+      if (onLoginSuccess) onLoginSuccess(data.data, data.message);
+    } catch (err) {
+      setError('No se pudo conectar con el servidor.');
+      setLoading(false);
+    }
+  };
+
   // OTP Modal
   const [isOtpOpen, setIsOtpOpen] = useState(false);
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const otpRefs = [useRef(null), useRef(null), useRef(null), useRef(null), useRef(null), useRef(null)];
+  const [otpError, setOtpError] = useState('');
 
   const handleOtpChange = (index, value) => {
     if (/^[0-9]$/.test(value) || value === '') {
       const newOtp = [...otp];
       newOtp[index] = value;
       setOtp(newOtp);
+      setOtpError('');
       if (value !== '' && index < 5) {
         otpRefs[index + 1].current.focus();
       }
@@ -93,6 +125,7 @@ export default function LoginPage({ onBack, onOpenRegister, onLoginSuccess }) {
       }
       setLoading(false);
       setOtp(['', '', '', '', '', '']);
+      setOtpError('');
       setIsOtpOpen(true);
       setTimeout(() => {
         if (otpRefs[0].current) otpRefs[0].current.focus();
@@ -105,9 +138,10 @@ export default function LoginPage({ onBack, onOpenRegister, onLoginSuccess }) {
 
   const handleValidateOtp = async () => {
     if (otp.some(digit => digit === '')) {
-      alert('Por favor ingresa el código completo de 6 dígitos.');
+      setOtpError('Por favor ingresa el código completo de 6 dígitos.');
       return;
     }
+    setOtpError('');
     setLoading(true);
     try {
       const res = await fetch('/api/auth/verify-otp', {
@@ -117,7 +151,7 @@ export default function LoginPage({ onBack, onOpenRegister, onLoginSuccess }) {
       });
       const data = await res.json();
       if (!res.ok) {
-        alert(data.message || 'Código inválido.');
+        setOtpError(data.message || 'Código inválido.');
         setLoading(false);
         return;
       }
@@ -125,7 +159,7 @@ export default function LoginPage({ onBack, onOpenRegister, onLoginSuccess }) {
       setIsOtpOpen(false);
       if (onLoginSuccess) onLoginSuccess(data.data, data.message);
     } catch (err) {
-      alert('No se pudo conectar con el servidor.');
+      setOtpError('No se pudo conectar con el servidor.');
       setLoading(false);
     }
   };
@@ -173,6 +207,10 @@ export default function LoginPage({ onBack, onOpenRegister, onLoginSuccess }) {
         <div className="space-y-3 mt-8">
           <button
             type="button"
+            onClick={() => {
+              setSocialProvider('Google');
+              setIsSocialModalOpen(true);
+            }}
             className="w-full flex items-center justify-center gap-3 bg-white border border-gray-300 rounded-xl py-3 px-4 text-sm font-semibold text-slate-700 hover:bg-slate-50 active:scale-[0.98] transition-all cursor-pointer"
           >
             {/* Google G multicolor icon SVG */}
@@ -199,6 +237,10 @@ export default function LoginPage({ onBack, onOpenRegister, onLoginSuccess }) {
 
           <button
             type="button"
+            onClick={() => {
+              setSocialProvider('Apple');
+              setIsSocialModalOpen(true);
+            }}
             className="w-full flex items-center justify-center gap-3 bg-black rounded-xl py-3 px-4 text-sm font-semibold text-white hover:bg-slate-900 active:scale-[0.98] transition-all cursor-pointer"
           >
             {/* Apple Logo SVG */}
@@ -416,10 +458,13 @@ export default function LoginPage({ onBack, onOpenRegister, onLoginSuccess }) {
                     value={digit}
                     onChange={(e) => handleOtpChange(idx, e.target.value)}
                     onKeyDown={(e) => handleOtpKeyDown(idx, e)}
-                    className="h-12 w-10 sm:w-11 text-center font-extrabold text-lg rounded-xl border border-slate-200 outline-none transition-all focus:border-blue-500 focus:ring-4 focus:ring-blue-100/50 bg-slate-50 focus:bg-white"
+                    className={`h-12 w-10 sm:w-11 text-center font-extrabold text-lg rounded-xl border outline-none transition-all focus:ring-4 focus:ring-blue-100/50 bg-slate-50 focus:bg-white ${
+                      otpError ? 'border-red-500 focus:border-red-500' : 'border-slate-200 focus:border-blue-500'
+                    }`}
                   />
                 ))}
               </div>
+              {otpError && <span className="text-xs font-bold text-red-500 block mb-4 text-center">{otpError}</span>}
 
               {/* Actions */}
               <div className="flex flex-col gap-2 w-full mt-2">
@@ -433,8 +478,8 @@ export default function LoginPage({ onBack, onOpenRegister, onLoginSuccess }) {
                   type="button"
                   onClick={() => {
                     setOtp(['', '', '', '', '', '']);
+                    setOtpError('Código reenviado por WhatsApp.');
                     if (otpRefs[0].current) otpRefs[0].current.focus();
-                    alert('Código reenviado.');
                   }}
                   className="text-xs font-bold text-slate-500 hover:text-slate-800 transition-colors py-2 cursor-pointer"
                 >
@@ -445,6 +490,14 @@ export default function LoginPage({ onBack, onOpenRegister, onLoginSuccess }) {
           </div>
         </div>
       )}
+
+      {/* Social Auth Modal */}
+      <SocialAuthModal
+        isOpen={isSocialModalOpen}
+        onClose={() => setIsSocialModalOpen(false)}
+        provider={socialProvider}
+        onSuccess={handleSocialSuccess}
+      />
     </div>
   );
 }

@@ -12,7 +12,7 @@ const CITIES = [
   "Santa Marta"
 ];
 
-export default function FoundationRegisterPage({ onBack }) {
+export default function FoundationRegisterPage({ onBack, onRegisterSuccess }) {
   const [form, setForm] = useState({
     nombres: '',
     apellidos: '',
@@ -34,30 +34,58 @@ export default function FoundationRegisterPage({ onBack }) {
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [apiError, setApiError] = useState('');
+  const [errors, setErrors] = useState({
+    password: '',
+    confirmPassword: '',
+    tieneTransporte: '',
+    acceptTerms: '',
+    acceptCharityAgreement: ''
+  });
 
   const handleChange = (field) => (e) => {
     setForm((prev) => ({ ...prev, [field]: e.target.value }));
+    setErrors((prev) => ({ ...prev, [field]: '' }));
+    if (field === 'password' || field === 'confirmPassword') {
+      setErrors((prev) => ({ ...prev, password: '', confirmPassword: '' }));
+    }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setApiError('');
-    if (form.password !== form.confirmPassword) {
-      alert('Las contraseñas no coinciden.');
-      return;
-    }
+    let hasError = false;
+    const newErrors = {
+      password: '',
+      confirmPassword: '',
+      tieneTransporte: '',
+      acceptTerms: '',
+      acceptCharityAgreement: ''
+    };
+
     if (form.password.length < 8) {
-      alert('La contraseña debe tener un mínimo de 8 caracteres.');
-      return;
+      newErrors.password = 'La contraseña debe tener un mínimo de 8 caracteres.';
+      hasError = true;
+    }
+    if (form.password !== form.confirmPassword) {
+      newErrors.confirmPassword = 'Las contraseñas no coinciden.';
+      hasError = true;
     }
     if (!form.tieneTransporte) {
-      alert('Por favor selecciona si cuentas con transporte propio.');
-      return;
+      newErrors.tieneTransporte = 'Por favor selecciona si cuentas con transporte propio.';
+      hasError = true;
     }
-    if (!acceptTerms || !acceptCharityAgreement) {
-      alert('Debes aceptar todos los acuerdos y términos legales.');
-      return;
+    if (!acceptTerms) {
+      newErrors.acceptTerms = 'Debes aceptar los Términos y Condiciones.';
+      hasError = true;
     }
+    if (!acceptCharityAgreement) {
+      newErrors.acceptCharityAgreement = 'Debes aceptar el Acuerdo de Donación.';
+      hasError = true;
+    }
+
+    setErrors(newErrors);
+    if (hasError) return;
+
     setLoading(true);
     try {
       const res = await fetch('/api/register/foundation', {
@@ -81,7 +109,12 @@ export default function FoundationRegisterPage({ onBack }) {
         setLoading(false);
         return;
       }
-      setSubmitted(true);
+      setLoading(false);
+      if (onRegisterSuccess) {
+        onRegisterSuccess({ ...data.data, email: form.email, telefono: form.telefono }, 'Fundación', '¡Fundación registrada con éxito! Los datos de la organización ' + form.nombreFundacion + ' han sido registrados.');
+      } else {
+        setSubmitted(true);
+      }
     } catch (err) {
       setApiError('No se pudo conectar con el servidor.');
       setLoading(false);
@@ -244,7 +277,9 @@ export default function FoundationRegisterPage({ onBack }) {
                     placeholder="Mínimo 8 caracteres"
                     value={form.password}
                     onChange={handleChange('password')}
-                    className="h-12 w-full rounded-xl border border-slate-200 bg-white pl-11 pr-12 text-sm text-slate-800 placeholder-slate-400 outline-none transition-all focus:border-blue-500 focus:ring-4 focus:ring-blue-100/60"
+                    className={`h-12 w-full rounded-xl border bg-white pl-11 pr-12 text-sm text-slate-800 placeholder-slate-400 outline-none transition-all focus:ring-4 ${
+                      errors.password ? 'border-red-500 focus:border-red-500 focus:ring-red-100/50' : 'border-slate-200 focus:border-blue-500 focus:ring-blue-100/60'
+                    }`}
                   />
                   <button
                     type="button"
@@ -254,6 +289,7 @@ export default function FoundationRegisterPage({ onBack }) {
                     {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
                 </div>
+                {errors.password && <span className="text-[10px] font-bold text-red-500 block mt-0.5">{errors.password}</span>}
               </div>
 
               {/* Fila 3: Confirmar contraseña */}
@@ -270,7 +306,9 @@ export default function FoundationRegisterPage({ onBack }) {
                     placeholder="Repite tu contraseña"
                     value={form.confirmPassword}
                     onChange={handleChange('confirmPassword')}
-                    className="h-12 w-full rounded-xl border border-slate-200 bg-white pl-11 pr-12 text-sm text-slate-800 placeholder-slate-400 outline-none transition-all focus:border-blue-500 focus:ring-4 focus:ring-blue-100/60"
+                    className={`h-12 w-full rounded-xl border bg-white pl-11 pr-12 text-sm text-slate-800 placeholder-slate-400 outline-none transition-all focus:ring-4 ${
+                      errors.confirmPassword ? 'border-red-500 focus:border-red-500 focus:ring-red-100/50' : 'border-slate-200 focus:border-blue-500 focus:ring-blue-100/60'
+                    }`}
                   />
                   <button
                     type="button"
@@ -280,6 +318,7 @@ export default function FoundationRegisterPage({ onBack }) {
                     {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
                 </div>
+                {errors.confirmPassword && <span className="text-[10px] font-bold text-red-500 block mt-0.5">{errors.confirmPassword}</span>}
               </div>
 
               {/* Fila 4: Nombre de la Fundación */}
@@ -311,12 +350,15 @@ export default function FoundationRegisterPage({ onBack }) {
                   required
                   value={form.tieneTransporte}
                   onChange={handleChange('tieneTransporte')}
-                  className="h-12 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm text-slate-800 outline-none transition-all focus:border-blue-500 focus:ring-4 focus:ring-blue-100/60 cursor-pointer"
+                  className={`h-12 w-full rounded-xl border bg-white px-4 text-sm text-slate-800 outline-none transition-all focus:ring-4 cursor-pointer ${
+                    errors.tieneTransporte ? 'border-red-500 focus:border-red-500 focus:ring-red-100/50' : 'border-slate-200 focus:border-blue-500 focus:ring-blue-100/60'
+                  }`}
                 >
                   <option value="" disabled>Selecciona una opción</option>
                   <option value="si">Sí, cuento con transporte</option>
                   <option value="no">No, requiero ayuda con la entrega</option>
                 </select>
+                {errors.tieneTransporte && <span className="text-[10px] font-bold text-red-500 block mt-0.5">{errors.tieneTransporte}</span>}
               </div>
 
               {/* Fila 5: Dirección de la Fundación */}
@@ -364,35 +406,47 @@ export default function FoundationRegisterPage({ onBack }) {
               
               {/* Checkboxes de aceptación */}
               <div className="flex flex-col gap-3">
-                <label className="flex items-start gap-3 cursor-pointer select-none">
-                  <input
-                    type="checkbox"
-                    checked={acceptTerms}
-                    onChange={(e) => setAcceptTerms(e.target.checked)}
-                    className="mt-0.5 h-4 w-4 shrink-0 accent-blue-600 cursor-pointer"
-                  />
-                  <span className="text-xs text-slate-500 leading-normal">
-                    Acepto los{' '}
-                    <a href="#" className="text-blue-600 font-bold hover:underline">Términos y Condiciones de Uso</a>{' '}
-                    y la{' '}
-                    <a href="#" className="text-blue-600 font-bold hover:underline">Política de Privacidad</a>{' '}
-                    de SADYA.
-                  </span>
-                </label>
+                <div className="flex flex-col gap-1">
+                  <label className="flex items-start gap-3 cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={acceptTerms}
+                      onChange={(e) => {
+                        setAcceptTerms(e.target.checked);
+                        setErrors((prev) => ({ ...prev, acceptTerms: '' }));
+                      }}
+                      className="mt-0.5 h-4 w-4 shrink-0 accent-blue-600 cursor-pointer"
+                    />
+                    <span className="text-xs text-slate-500 leading-normal">
+                      Acepto los{' '}
+                      <a href="#" className="text-blue-600 font-bold hover:underline">Términos y Condiciones de Uso</a>{' '}
+                      y la{' '}
+                      <a href="#" className="text-blue-600 font-bold hover:underline">Política de Privacidad</a>{' '}
+                      de SADYA.
+                    </span>
+                  </label>
+                  {errors.acceptTerms && <span className="text-[10px] font-bold text-red-500 block">{errors.acceptTerms}</span>}
+                </div>
 
-                <label className="flex items-start gap-3 cursor-pointer select-none">
-                  <input
-                    type="checkbox"
-                    checked={acceptCharityAgreement}
-                    onChange={(e) => setAcceptCharityAgreement(e.target.checked)}
-                    className="mt-0.5 h-4 w-4 shrink-0 accent-blue-600 cursor-pointer"
-                  />
-                  <span className="text-xs text-slate-500 leading-normal">
-                    Acepto el{' '}
-                    <a href="#" className="text-blue-600 font-bold hover:underline">Acuerdo de Donación y Distribución Responsable</a>{' '}
-                    de excedentes de alimentos para poblaciones vulnerables.
-                  </span>
-                </label>
+                <div className="flex flex-col gap-1">
+                  <label className="flex items-start gap-3 cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={acceptCharityAgreement}
+                      onChange={(e) => {
+                        setAcceptCharityAgreement(e.target.checked);
+                        setErrors((prev) => ({ ...prev, acceptCharityAgreement: '' }));
+                      }}
+                      className="mt-0.5 h-4 w-4 shrink-0 accent-blue-600 cursor-pointer"
+                    />
+                    <span className="text-xs text-slate-500 leading-normal">
+                      Acepto el{' '}
+                      <a href="#" className="text-blue-600 font-bold hover:underline">Acuerdo de Donación y Distribución Responsable</a>{' '}
+                      de excedentes de alimentos para poblaciones vulnerables.
+                    </span>
+                  </label>
+                  {errors.acceptCharityAgreement && <span className="text-[10px] font-bold text-red-500 block">{errors.acceptCharityAgreement}</span>}
+                </div>
               </div>
 
               {apiError && (
