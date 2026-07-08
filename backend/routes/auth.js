@@ -4,9 +4,14 @@
 
 import { Router } from 'express';
 import bcrypt from 'bcrypt';
+import nodemailer from 'nodemailer';
 import { query } from '../db.js';
 
 const router = Router();
+
+// Stores for codes in memory (useful for validation and development testing)
+const otpStore = new Map();
+const forgotPasswordStore = new Map();
 
 // ── POST /api/auth/login ────────────────────────────────
 // Login con contraseña (correo o teléfono + password)
@@ -29,7 +34,7 @@ router.post('/auth/login', async (req, res) => {
 
     // Search by email OR phone
     const userResult = await query(
-      `SELECT u.id_usuario, u.nombres, u.apellidos, u.email, u.telefono, u.password, r.tipo_rol
+      `SELECT u.id_usuario, u.nombres, u.apellidos, u.email, u.telefono, u.password, r.tipo_rol, u.foto_perfil
        FROM t_usuarios u
        JOIN t_roles r ON u.id_rol = r.id_rol
        WHERE u.email = $1 OR u.telefono = $1
@@ -74,6 +79,7 @@ router.post('/auth/login', async (req, res) => {
         email: user.email,
         telefono: user.telefono,
         rol: user.tipo_rol,
+        foto_perfil: user.foto_perfil,
       },
     });
 
@@ -89,7 +95,7 @@ router.post('/auth/login', async (req, res) => {
 
 // ── POST /api/auth/login-code ───────────────────────────
 // Login sin contraseña (solo teléfono — para Campesinos)
-// Busca al usuario por teléfono y devuelve si existe
+// Busca al usuario por teléfono y envía código por SMS real (si está configurado) o simulación
 router.post('/auth/login-code', async (req, res) => {
   try {
     const { celular } = req.body;
@@ -119,13 +125,59 @@ router.post('/auth/login-code', async (req, res) => {
 
     const user = userResult.rows[0];
 
-    // In production, this is where you'd send an actual OTP via WhatsApp API
-    // For now, we just confirm the user exists and simulate OTP sent
-    console.log(`📲 Código OTP solicitado para: ${user.nombres} (Tel: ${user.telefono})`);
+    // Generate random 6-digit OTP
+    const generatedOtp = Math.floor(100000 + Math.random() * 900000).toString();
+    otpStore.set(celular.trim(), generatedOtp);
+
+    // Check Twilio credentials
+    const accountSid = process.env.TWILIO_ACCOUNT_SID;
+    const authToken = process.env.TWILIO_AUTH_TOKEN;
+    const fromPhone = process.env.TWILIO_PHONE_NUMBER;
+
+    let smsSent = false;
+    let smsError = '';
+
+    if (accountSid && authToken && fromPhone) {
+      try {
+        const formattedPhone = celular.trim().startsWith('+') ? celular.trim() : `+57${celular.trim()}`;
+        const authHeader = Buffer.from(`${accountSid}:${authToken}`).toString('base64');
+        const twilioRes = await fetch(
+          `https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json`,
+          {
+            method: 'POST',
+            headers: {
+              'Authorization': `Basic ${authHeader}`,
+              'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: new URLSearchParams({
+              To: formattedPhone,
+              From: fromPhone,
+              Body: `SADYA: Tu codigo de inicio de sesion es ${generatedOtp}. Valido por 5 minutos.`,
+            }),
+          }
+        );
+        const twilioData = await twilioRes.json();
+        if (twilioRes.ok) {
+          smsSent = true;
+          console.log(`📲 SMS OTP enviado con éxito a ${formattedPhone}: SID ${twilioData.sid}`);
+        } else {
+          smsError = twilioData.message;
+          console.error(`❌ Error de Twilio al enviar SMS: ${twilioData.message}`);
+        }
+      } catch (smsErr) {
+        smsError = smsErr.message;
+        console.error(`❌ Error al conectar con Twilio para enviar SMS:`, smsErr.message);
+      }
+    } else {
+      console.log(`⚠️ Twilio no configurado. Código OTP simulado para: ${user.nombres} (Tel: ${user.telefono}) -> [${generatedOtp}]`);
+    }
 
     res.status(200).json({
       status: 'ok',
-      message: 'Código enviado por WhatsApp.',
+      message: smsSent 
+        ? 'Código de verificación enviado por Mensaje de Texto (SMS).' 
+        : 'Código de verificación generado (Simulación).',
+      debugCode: (process.env.NODE_ENV === 'development' || !smsSent) ? generatedOtp : undefined,
       data: {
         id: user.id_usuario,
         nombres: user.nombres,
@@ -155,8 +207,7 @@ router.post('/auth/verify-otp', async (req, res) => {
       });
     }
 
-    // In production: validate actual OTP from cache/DB
-    // For now: accept any 6-digit code
+    // Validate length
     if (otp.length !== 6 || !/^\d{6}$/.test(otp)) {
       return res.status(400).json({
         status: 'error',
@@ -164,8 +215,17 @@ router.post('/auth/verify-otp', async (req, res) => {
       });
     }
 
+    // Verify code matching
+    const storedOtp = otpStore.get(celular.trim());
+    if (!storedOtp || storedOtp !== otp) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'El código de verificación ingresado es incorrecto o expiró.',
+      });
+    }
+
     const userResult = await query(
-      `SELECT u.id_usuario, u.nombres, u.apellidos, u.telefono, r.tipo_rol
+      `SELECT u.id_usuario, u.nombres, u.apellidos, u.telefono, r.tipo_rol, u.foto_perfil
        FROM t_usuarios u
        JOIN t_roles r ON u.id_rol = r.id_rol
        WHERE u.telefono = $1
@@ -182,6 +242,9 @@ router.post('/auth/verify-otp', async (req, res) => {
 
     const user = userResult.rows[0];
 
+    // Clean code once validated
+    otpStore.delete(celular.trim());
+
     console.log(`✅ Login OTP exitoso: ${user.nombres} ${user.apellidos || ''} (${user.tipo_rol})`);
 
     res.status(200).json({
@@ -193,6 +256,7 @@ router.post('/auth/verify-otp', async (req, res) => {
         apellidos: user.apellidos,
         telefono: user.telefono,
         rol: user.tipo_rol,
+        foto_perfil: user.foto_perfil,
       },
     });
 
@@ -201,6 +265,168 @@ router.post('/auth/verify-otp', async (req, res) => {
     res.status(500).json({
       status: 'error',
       message: 'Error interno al verificar el código.',
+      detail: err.message,
+    });
+  }
+});
+
+// ── POST /api/auth/forgot-password ──────────────────────
+// Envía un correo con código de recuperación
+router.post('/auth/forgot-password', async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email?.trim()) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'Por favor ingresa tu correo electrónico.',
+      });
+    }
+
+    const userResult = await query(
+      `SELECT id_usuario, nombres, email FROM t_usuarios WHERE email = $1 LIMIT 1`,
+      [email.trim().toLowerCase()]
+    );
+
+    if (userResult.rows.length === 0) {
+      return res.status(404).json({
+        status: 'error',
+        message: 'No se encontró ninguna cuenta registrada con este correo electrónico.',
+      });
+    }
+
+    const user = userResult.rows[0];
+
+    // Generate random 6-digit recovery token
+    const resetToken = Math.floor(100000 + Math.random() * 900000).toString();
+    forgotPasswordStore.set(email.trim().toLowerCase(), resetToken);
+
+    // Setup nodemailer
+    const smtpHost = process.env.SMTP_HOST;
+    const smtpPort = parseInt(process.env.SMTP_PORT) || 587;
+    const smtpUser = process.env.SMTP_USER;
+    const smtpPass = process.env.SMTP_PASS;
+
+    let emailSent = false;
+    let mailError = '';
+
+    if (smtpUser && smtpPass) {
+      try {
+        const transporter = nodemailer.createTransport({
+          host: smtpHost || 'smtp.gmail.com',
+          port: smtpPort,
+          secure: smtpPort === 465,
+          auth: {
+            user: smtpUser,
+            pass: smtpPass,
+          },
+        });
+
+        await transporter.sendMail({
+          from: `"SADYA Soporte" <${smtpUser}>`,
+          to: user.email,
+          subject: 'SADYA — Código de recuperación de contraseña',
+          html: `
+            <div style="font-family: sans-serif; padding: 20px; max-width: 600px; margin: auto; border: 1px solid #f1f5f9; rounded: 16px;">
+              <h2 style="color: #2563eb; font-weight: 800;">Hola, ${user.nombres}</h2>
+              <p>Has solicitado restablecer la contraseña de tu cuenta en la plataforma SADYA.</p>
+              <p>Tu código de seguridad temporal es:</p>
+              <div style="background-color: #f8fafc; padding: 15px; text-align: center; border-radius: 12px; border: 1px solid #e2e8f0; margin: 20px 0;">
+                <span style="font-size: 24px; font-weight: 900; letter-spacing: 4px; color: #1e293b;">${resetToken}</span>
+              </div>
+              <p style="color: #64748b; font-size: 12px;">Este código es de un solo uso y vencerá en 10 minutos. Si no solicitaste este cambio, por favor ignora este correo.</p>
+              <hr style="border: 0; border-top: 1px solid #f1f5f9; margin: 20px 0;"/>
+              <p style="font-size: 11px; color: #94a3b8; text-align: center;">SADYA Marketplace — Alimentando el futuro, evitando el desperdicio.</p>
+            </div>
+          `,
+        });
+        emailSent = true;
+        console.log(`✉️ Correo de recuperación enviado con éxito a ${user.email}`);
+      } catch (errSend) {
+        mailError = errSend.message;
+        console.error('❌ Error al enviar correo de recuperación con NodeMailer:', errSend.message);
+      }
+    } else {
+      console.log(`⚠️ Servidor SMTP no configurado. Código de recuperación simulado para ${user.email} -> [${resetToken}]`);
+    }
+
+    res.status(200).json({
+      status: 'ok',
+      message: emailSent
+        ? 'Se ha enviado un correo con tu código de recuperación de contraseña.'
+        : 'Código de recuperación generado en consola (Simulación).',
+      debugCode: (process.env.NODE_ENV === 'development' || !emailSent) ? resetToken : undefined,
+    });
+
+  } catch (err) {
+    console.error('❌ Error en forgot-password:', err.message);
+    res.status(500).json({
+      status: 'error',
+      message: 'Error interno al procesar la recuperación de contraseña.',
+      detail: err.message,
+    });
+  }
+});
+
+// ── POST /api/auth/reset-password ───────────────────────
+// Restablece la contraseña usando el código recibido
+router.post('/auth/reset-password', async (req, res) => {
+  try {
+    const { email, code, newPassword } = req.body;
+
+    if (!email?.trim() || !code?.trim() || !newPassword?.trim()) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'Todos los campos son obligatorios.',
+      });
+    }
+
+    if (newPassword.length < 8) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'La nueva contraseña debe tener al menos 8 caracteres de longitud.',
+      });
+    }
+
+    const storedCode = forgotPasswordStore.get(email.trim().toLowerCase());
+    if (!storedCode || storedCode !== code.trim()) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'El código de seguridad ingresado es incorrecto o ha expirado.',
+      });
+    }
+
+    // Encrypt new password
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    // Update in database
+    const updateResult = await query(
+      `UPDATE t_usuarios SET password = $1 WHERE email = $2 RETURNING id_usuario`,
+      [hashedPassword, email.trim().toLowerCase()]
+    );
+
+    if (updateResult.rows.length === 0) {
+      return res.status(404).json({
+        status: 'error',
+        message: 'No se pudo actualizar la contraseña. El usuario no existe.',
+      });
+    }
+
+    // Clean reset token
+    forgotPasswordStore.delete(email.trim().toLowerCase());
+
+    console.log(`🔒 Contraseña actualizada correctamente para usuario con email: ${email}`);
+
+    res.status(200).json({
+      status: 'ok',
+      message: '¡Contraseña restablecida con éxito! Ya puedes iniciar sesión con tus nuevas credenciales.',
+    });
+
+  } catch (err) {
+    console.error('❌ Error en reset-password:', err.message);
+    res.status(500).json({
+      status: 'error',
+      message: 'Error interno al restablecer la contraseña.',
       detail: err.message,
     });
   }
@@ -219,16 +445,9 @@ router.post('/auth/social', async (req, res) => {
       });
     }
 
-    if (!email || !nombres) {
-      return res.status(400).json({
-        status: 'error',
-        message: 'El correo electrónico y nombre son obligatorios.',
-      });
-    }
-
-    // 1. Buscar si ya existe el usuario con esa cuenta de red social vinculada
-    const socialUser = await query(
-      `SELECT u.id_usuario, u.nombres, u.apellidos, u.email, u.telefono, r.tipo_rol
+    // 1. Check if user already exists with this social ID
+    let userResult = await query(
+      `SELECT u.id_usuario, u.nombres, u.apellidos, u.email, u.telefono, r.tipo_rol, u.foto_perfil
        FROM t_usuarios u
        JOIN t_roles r ON u.id_rol = r.id_rol
        WHERE u.id_social = $1 AND u.metodo_registro = $2
@@ -236,9 +455,9 @@ router.post('/auth/social', async (req, res) => {
       [idSocial, metodoRegistro]
     );
 
-    if (socialUser.rows.length > 0) {
-      const user = socialUser.rows[0];
-      console.log(`✅ Login Social exitoso (${metodoRegistro}): ${user.nombres} ${user.apellidos || ''}`);
+    if (userResult.rows.length > 0) {
+      const user = userResult.rows[0];
+      console.log(`✅ Login social exitoso (${metodoRegistro}): ${user.nombres} (${user.tipo_rol})`);
       return res.status(200).json({
         status: 'ok',
         message: `¡Bienvenido de nuevo, ${user.nombres}!`,
@@ -249,64 +468,71 @@ router.post('/auth/social', async (req, res) => {
           email: user.email,
           telefono: user.telefono,
           rol: user.tipo_rol,
+          foto_perfil: user.foto_perfil,
         },
       });
     }
 
-    // 2. Si no existe, revisar si el correo electrónico ya está registrado localmente
-    const emailUser = await query(
-      `SELECT u.id_usuario, u.nombres, u.apellidos, u.email, u.telefono, r.tipo_rol
-       FROM t_usuarios u
-       JOIN t_roles r ON u.id_rol = r.id_rol
-       WHERE u.email = $1
-       LIMIT 1`,
-      [email.trim().toLowerCase()]
-    );
-
-    if (emailUser.rows.length > 0) {
-      const user = emailUser.rows[0];
-      console.log(`🔗 Vinculando cuenta de ${metodoRegistro} a usuario existente con email: ${email}`);
-      
-      await query(
-        `UPDATE t_usuarios
-         SET id_social = $1, metodo_registro = $2
-         WHERE id_usuario = $3`,
-        [idSocial, metodoRegistro, user.id_usuario]
+    // 2. If email exists in DB, link account to this social login
+    if (email) {
+      const emailResult = await query(
+        `SELECT id_usuario FROM t_usuarios WHERE email = $1 LIMIT 1`,
+        [email.trim().toLowerCase()]
       );
+      if (emailResult.rows.length > 0) {
+        const userId = emailResult.rows[0].id_usuario;
+        await query(
+          `UPDATE t_usuarios 
+           SET id_social = $1, metodo_registro = $2 
+           WHERE id_usuario = $3`,
+          [idSocial, metodoRegistro, userId]
+        );
 
-      return res.status(200).json({
-        status: 'ok',
-        message: `¡Cuenta de ${metodoRegistro} vinculada con éxito! Bienvenido, ${user.nombres}.`,
-        data: {
-          id: user.id_usuario,
-          nombres: user.nombres,
-          apellidos: user.apellidos,
-          email: user.email,
-          telefono: user.telefono,
-          rol: user.tipo_rol,
-        },
-      });
+        // Fetch updated user details
+        userResult = await query(
+          `SELECT u.id_usuario, u.nombres, u.apellidos, u.email, u.telefono, r.tipo_rol, u.foto_perfil
+           FROM t_usuarios u
+           JOIN t_roles r ON u.id_rol = r.id_rol
+           WHERE u.id_usuario = $1
+           LIMIT 1`,
+          [userId]
+        );
+        const user = userResult.rows[0];
+        console.log(`✅ Cuenta vinculada y login social exitoso (${metodoRegistro}): ${user.nombres}`);
+        return res.status(200).json({
+          status: 'ok',
+          message: `Hemos vinculado tu cuenta de ${metodoRegistro} con éxito.`,
+          data: {
+            id: user.id_usuario,
+            nombres: user.nombres,
+            apellidos: user.apellidos,
+            email: user.email,
+            telefono: user.telefono,
+            rol: user.tipo_rol,
+            foto_perfil: user.foto_perfil,
+          },
+        });
+      }
     }
 
-    // 3. Si no existe la vinculación social ni el correo, crear un nuevo usuario
-    let roleName = rol || 'Cliente';
-    let rolResult = await query(`SELECT id_rol FROM t_roles WHERE tipo_rol = $1 LIMIT 1`, [roleName]);
-    if (rolResult.rows.length === 0) {
-      rolResult = await query(`SELECT id_rol FROM t_roles WHERE tipo_rol ILIKE '%Cliente%' LIMIT 1`);
-    }
-    if (rolResult.rows.length === 0) {
-      return res.status(500).json({
-        status: 'error',
-        message: 'No se encontró el rol adecuado para registro social.',
-      });
-    }
-    const idRol = rolResult.rows[0].id_rol;
+    // 3. Register as new user via social credentials
+    const roleName = rol || 'Cliente';
+    const roleResult = await query(`SELECT id_rol FROM t_roles WHERE tipo_rol = $1 LIMIT 1`, [roleName]);
+    const id_rol = roleResult.rows.length > 0 ? roleResult.rows[0].id_rol : 3; // Defaults to Cliente
 
-    const userResult = await query(
-      `INSERT INTO t_usuarios (id_rol, nombres, apellidos, email, id_social, metodo_registro)
-       VALUES ($1, $2, $3, $4, $5, $6)
-       RETURNING id_usuario, nombres, apellidos, email, telefono`,
-      [idRol, nombres.trim(), apellidos?.trim() || null, email.trim().toLowerCase(), idSocial, metodoRegistro]
+    userResult = await query(
+      `INSERT INTO t_usuarios (
+        nombres, apellidos, email, id_rol, id_social, metodo_registro, fecha_creacion
+      ) VALUES ($1, $2, $3, $4, $5, $6, NOW())
+      RETURNING id_usuario, nombres, apellidos, email, telefono, foto_perfil`,
+      [
+        nombres || 'Usuario',
+        apellidos || null,
+        email ? email.trim().toLowerCase() : null,
+        id_rol,
+        idSocial,
+        metodoRegistro,
+      ]
     );
 
     const newUser = userResult.rows[0];
@@ -322,6 +548,7 @@ router.post('/auth/social', async (req, res) => {
         email: newUser.email,
         telefono: newUser.telefono,
         rol: roleName,
+        foto_perfil: newUser.foto_perfil,
       },
     });
 

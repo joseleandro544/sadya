@@ -9,10 +9,23 @@ import HeroMetrics from './components/HeroMetrics';
 import Categories from './components/Categories';
 import Promotions from './components/Promotions';
 import ProductGrid from './components/ProductGrid';
+import CategoryGroupedView from './components/CategoryGroupedView';
 import FamilySection from './components/FamilySection';
 import LoginPage from './components/LoginPage';
 import SellerProductsPage from './components/SellerProductsPage';
+import UserProfilePage from './components/UserProfilePage';
+import RecoverPasswordPage from './components/RecoverPasswordPage';
 import { X, Trash2, ShieldAlert, HeartHandshake, CheckCircle } from 'lucide-react';
+
+const getLocationCoords = (locationStr) => {
+  const loc = (locationStr || '').replace('📍 ', '').trim();
+  if (loc.includes('Calle 45')) return { lat: 4.632, lng: -74.068 };
+  if (loc.includes('Carrera 7')) return { lat: 4.655, lng: -74.055 };
+  if (loc.includes('Avenida 19')) return { lat: 4.686, lng: -74.052 };
+  if (loc.includes('Calle 100')) return { lat: 4.687, lng: -74.043 };
+  if (loc.includes('Chía')) return { lat: 4.862, lng: -74.053 };
+  return { lat: 4.632, lng: -74.068 }; // Default
+};
 
 function App() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -206,6 +219,7 @@ function App() {
         <LoginPage 
           onBack={() => setCurrentPage('home')} 
           onOpenRegister={() => setCurrentPage('register')}
+          onOpenForgotPassword={() => setCurrentPage('recover-password')}
           onLoginSuccess={(userData, message) => {
             setUser(userData);
             localStorage.setItem('sadya_user', JSON.stringify(userData));
@@ -213,6 +227,24 @@ function App() {
             showToast(message);
             setCurrentPage('home');
           }}
+        />
+        {/* Toast Notification */}
+        {toast && (
+          <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2.5 bg-slate-900 text-white px-5 py-3 rounded-2xl shadow-xl transition-all duration-300 animate-slide-in border border-slate-800">
+            <CheckCircle className="h-5 w-5 text-green-500 shrink-0" />
+            <span className="text-xs font-bold tracking-tight">{toast}</span>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  if (currentPage === 'recover-password') {
+    return (
+      <div className="min-h-screen bg-[#f8fafc] text-slate-800 flex flex-col font-sans">
+        <RecoverPasswordPage 
+          onBack={() => setCurrentPage('home')} 
+          onBackToLogin={() => setCurrentPage('login')}
         />
         {/* Toast Notification */}
         {toast && (
@@ -243,6 +275,30 @@ function App() {
     );
   }
 
+  if (currentPage === 'profile') {
+    return (
+      <div className="min-h-screen bg-[#f8fafc] text-slate-800 flex flex-col font-sans">
+        <UserProfilePage 
+          user={user} 
+          onBack={() => setCurrentPage('home')} 
+          onProfileUpdate={(newUserData) => {
+            setUser(newUserData);
+            localStorage.setItem('sadya_user', JSON.stringify(newUserData));
+          }}
+        />
+        {/* Toast Notification */}
+        {toast && (
+          <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2.5 bg-slate-900 text-white px-5 py-3 rounded-2xl shadow-xl transition-all duration-300 animate-slide-in border border-slate-800">
+            <CheckCircle className="h-5 w-5 text-green-500 shrink-0" />
+            <span className="text-xs font-bold tracking-tight">{toast}</span>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  const { lat, lng } = getLocationCoords(currentLocation);
+
   return (
     <div className="min-h-screen bg-[#f8fafc] text-slate-800 flex flex-col font-sans">
       {/* 1. Header / Navbar */}
@@ -261,6 +317,7 @@ function App() {
         onOpenDelivererRegister={() => setCurrentPage('register-deliverer')}
         onOpenFoundationRegister={() => setCurrentPage('register-foundation')}
         onOpenSellerProducts={() => setCurrentPage('seller-products')}
+        onOpenProfile={() => setCurrentPage('profile')}
         onGoToHome={() => {
           setCurrentPage('home');
           setSelectedCategory('all');
@@ -294,19 +351,35 @@ function App() {
           setSelectedCategory={setSelectedCategory}
         />
 
+        {/* 3.5. Vista Agrupada por Categoria Seleccionada (Solo si no es 'all') */}
+        {selectedCategory !== 'all' && (
+          <CategoryGroupedView 
+            selectedCategory={selectedCategory}
+            setSelectedCategory={setSelectedCategory}
+            onAddToCart={handleAddToCart}
+            lat={lat}
+            lng={lng}
+            user={user}
+            searchQuery={searchQuery}
+          />
+        )}
+
         {/* 4. Súper Promociones */}
         <Promotions 
           onSelectPromoCategory={handleSelectPromoCategory}
         />
 
-        {/* 5. Grid de Productos */}
+        {/* 5. Grid de Productos (Alimentos cerca de ti, al mejor precio - Siempre visible) */}
         <ProductGrid 
           searchQuery={searchQuery}
-          selectedCategory={selectedCategory}
+          selectedCategory="all"
           setSelectedCategory={setSelectedCategory}
           onAddToCart={handleAddToCart}
           userPreferences={userPreferences}
           setUserPreferences={setUserPreferences}
+          lat={lat}
+          lng={lng}
+          user={user}
         />
 
         {/* 6. Haz parte de nuestra familia SADYA */}

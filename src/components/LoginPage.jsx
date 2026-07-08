@@ -3,7 +3,7 @@ import { Eye, EyeOff, ArrowLeft, ShieldAlert, Phone, X } from 'lucide-react';
 import SocialAuthModal from './SocialAuthModal';
 
 
-export default function LoginPage({ onBack, onOpenRegister, onLoginSuccess }) {
+export default function LoginPage({ onBack, onOpenRegister, onLoginSuccess, onOpenForgotPassword }) {
   // Auth mode: 'password' | 'code'
   const [authMode, setAuthMode] = useState('password');
 
@@ -203,63 +203,7 @@ export default function LoginPage({ onBack, onOpenRegister, onLoginSuccess }) {
           </div>
         )}
 
-        {/* SSO Buttons */}
-        <div className="space-y-3 mt-8">
-          <button
-            type="button"
-            onClick={() => {
-              setSocialProvider('Google');
-              setIsSocialModalOpen(true);
-            }}
-            className="w-full flex items-center justify-center gap-3 bg-white border border-gray-300 rounded-xl py-3 px-4 text-sm font-semibold text-slate-700 hover:bg-slate-50 active:scale-[0.98] transition-all cursor-pointer"
-          >
-            {/* Google G multicolor icon SVG */}
-            <svg className="h-5 w-5 shrink-0" viewBox="0 0 24 24">
-              <path
-                fill="#EA4335"
-                d="M12 5.04c1.66 0 3.2.57 4.38 1.69l3.27-3.27C17.67 1.57 14.97 1 12 1 7.35 1 3.4 3.65 1.5 7.54l3.86 3C6.26 7.56 8.9 5.04 12 5.04z"
-              />
-              <path
-                fill="#4285F4"
-                d="M23.49 12.27c0-.81-.07-1.59-.2-2.36H12v4.51h6.46c-.28 1.48-1.12 2.74-2.38 3.58l3.7 2.87c2.16-1.99 3.41-4.91 3.41-8.6z"
-              />
-              <path
-                fill="#FBBC05"
-                d="M5.36 14.46c-.23-.69-.36-1.42-.36-2.18s.13-1.49.36-2.18v-3.8l-3.86-3C.68 5.08 0 7.82 0 10.78s.68 5.7 1.5 7.48l3.86-3.8z"
-              />
-              <path
-                fill="#34A853"
-                d="M12 23c3.24 0 5.97-1.07 7.96-2.91l-3.7-2.87c-1.03.69-2.34 1.1-4.26 1.1-3.1 0-5.74-2.52-6.68-5.5l-3.86 3C3.4 20.35 7.35 23 12 23z"
-              />
-            </svg>
-            <span>Continuar con Google</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => {
-              setSocialProvider('Apple');
-              setIsSocialModalOpen(true);
-            }}
-            className="w-full flex items-center justify-center gap-3 bg-black rounded-xl py-3 px-4 text-sm font-semibold text-white hover:bg-slate-900 active:scale-[0.98] transition-all cursor-pointer"
-          >
-            {/* Apple Logo SVG */}
-            <svg className="h-5 w-5 shrink-0 fill-current" viewBox="0 0 24 24">
-              <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 4.17c.66-.81 1.11-1.93.99-3.06-1 .04-2.22.67-2.94 1.51-.64.74-1.2 1.88-1.05 2.99 1.12.09 2.26-.54 3-1.44z" />
-            </svg>
-            <span>Continuar con Apple</span>
-          </button>
-        </div>
-
-        {/* Separator */}
-        <div className="relative my-6">
-          <div className="absolute inset-0 flex items-center" aria-hidden="true">
-            <div className="w-full border-t border-slate-200"></div>
-          </div>
-          <div className="relative flex justify-center text-xs uppercase">
-            <span className="bg-white px-3 text-slate-400 font-bold tracking-widest">O</span>
-          </div>
-        </div>
+        <div className="mt-6"></div>
 
         {/* ── Pill Tab Selector ── */}
         <div className="bg-gray-100 rounded-full flex p-1">
@@ -315,7 +259,7 @@ export default function LoginPage({ onBack, onOpenRegister, onLoginSuccess }) {
                   href="#"
                   onClick={(e) => {
                     e.preventDefault();
-                    alert('Funcionalidad de recuperación de contraseña simulada.');
+                    if (onOpenForgotPassword) onOpenForgotPassword();
                   }}
                   className="text-xs font-bold text-blue-600 hover:text-blue-700 transition-colors"
                 >
@@ -361,7 +305,7 @@ export default function LoginPage({ onBack, onOpenRegister, onLoginSuccess }) {
             <div className="bg-amber-50 border border-amber-100 rounded-xl p-3 flex items-start gap-2.5">
               <Phone className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
               <p className="text-xs text-amber-700 leading-relaxed">
-                <strong>¿No tienes contraseña?</strong> Si eres campesino o productor, ingresa tu número de celular registrado y te enviaremos un código por WhatsApp para iniciar sesión.
+                <strong>¿No tienes contraseña?</strong> Si eres campesino o productor, ingresa tu número de celular registrado y te enviaremos un código por Mensaje de Texto (SMS) para iniciar sesión.
               </p>
             </div>
 
@@ -394,7 +338,7 @@ export default function LoginPage({ onBack, onOpenRegister, onLoginSuccess }) {
               {loading ? (
                 <><svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>Buscando...</>
               ) : (
-                <><Phone className="h-4 w-4" />Recibir código por WhatsApp</>
+                <><Phone className="h-4 w-4" />Recibir código por SMS</>
               )}
             </button>
           </form>
@@ -442,7 +386,7 @@ export default function LoginPage({ onBack, onOpenRegister, onLoginSuccess }) {
                 Ingresa el código de 6 dígitos
               </h3>
               <p className="text-xs text-slate-400 mt-2 max-w-xs leading-relaxed">
-                Enviamos un código por WhatsApp al{' '}
+                Enviamos un código por Mensaje de Texto (SMS) al{' '}
                 <strong className="text-slate-800">+57 {celular || '3XXXXXXXXX'}</strong>.
                 Ingrésalo a continuación para iniciar sesión.
               </p>
@@ -478,7 +422,7 @@ export default function LoginPage({ onBack, onOpenRegister, onLoginSuccess }) {
                   type="button"
                   onClick={() => {
                     setOtp(['', '', '', '', '', '']);
-                    setOtpError('Código reenviado por WhatsApp.');
+                    setOtpError('Código reenviado por SMS.');
                     if (otpRefs[0].current) otpRefs[0].current.focus();
                   }}
                   className="text-xs font-bold text-slate-500 hover:text-slate-800 transition-colors py-2 cursor-pointer"

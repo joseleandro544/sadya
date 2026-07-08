@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { ShoppingCart, Check, Clock } from 'lucide-react';
 
-export default function ProductCard({ product, onAddToCart }) {
+export default function ProductCard({ product, onAddToCart, compact = false }) {
   const {
     id,
     name,
@@ -33,20 +33,33 @@ export default function ProductCard({ product, onAddToCart }) {
     }).format(val).replace('COP', 'COP ');
   };
 
+  const getExpiryStyle = () => {
+    const text = (expiryText || '').toLowerCase();
+    if (text.includes('hoy') || text.includes('vencido') || text.includes('1 día') || text.includes('2 días') || text.includes('1 dia') || text.includes('2 dias') || text.includes('ayer')) {
+      return 'bg-red-50 text-red-600 border border-red-100';
+    } else if (text.includes('3 días') || text.includes('4 días') || text.includes('3 o 4 días') || text.includes('3 dias') || text.includes('4 dias') || text.includes('3 o 4 dias') || text.includes('próximo')) {
+      return 'bg-amber-50 text-amber-700 border border-amber-100';
+    } else {
+      return 'bg-emerald-50 text-emerald-700 border border-emerald-100';
+    }
+  };
+
   return (
-    <div className="group flex flex-col bg-white border border-slate-100 rounded-3xl overflow-hidden shadow-sm hover:shadow-premium transition-all duration-300 hover:-translate-y-1">
+    <div className={`group flex flex-col bg-white border border-slate-100 rounded-3xl overflow-hidden shadow-sm hover:shadow-premium transition-all duration-300 hover:-translate-y-1 ${compact ? 'max-w-[210px]' : ''}`}>
       {/* 50% Top: Image container */}
-      <div className="relative h-48 w-full overflow-hidden bg-slate-100">
+      <div className={`relative w-full overflow-hidden bg-slate-100 ${compact ? 'h-32' : 'h-48'}`}>
         <img
           src={image}
           alt={name}
           className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
           loading="lazy"
         />
-        {/* Top-Left: White Category Badge */}
-        <span className="absolute top-3 left-3 bg-white text-slate-800 text-[10px] font-extrabold px-3 py-1 rounded-full shadow-sm uppercase tracking-wider border border-slate-100/50">
-          {category}
-        </span>
+        {/* Top-Left: White Category Badge (Hidden in compact mode) */}
+        {!compact && (
+          <span className="absolute top-3 left-3 bg-white text-slate-800 text-[10px] font-extrabold px-3 py-1 rounded-full shadow-sm uppercase tracking-wider border border-slate-100/50">
+            {category}
+          </span>
+        )}
         {/* Bottom-Right: Blue Distance Badge */}
         <span className="absolute bottom-3 right-3 bg-blue-600/90 backdrop-blur-sm text-white text-[10px] font-bold px-2.5 py-1 rounded-full shadow-sm flex items-center gap-1">
           📍 {distance} km
@@ -54,19 +67,19 @@ export default function ProductCard({ product, onAddToCart }) {
       </div>
 
       {/* Info Content Area */}
-      <div className="flex-1 p-5 flex flex-col justify-between">
+      <div className={`flex-1 flex flex-col justify-between ${compact ? 'p-3.5' : 'p-5'}`}>
         <div>
           {/* Shop Name */}
-          <span className="text-[11px] font-extrabold text-blue-600 tracking-wider uppercase block">
+          <span className={`font-extrabold tracking-wider uppercase block ${compact ? 'text-[9px] text-blue-500' : 'text-[11px] text-blue-600'}`}>
             {store}
           </span>
           {/* Product Name */}
-          <h3 className="text-base font-extrabold text-slate-900 mt-1 line-clamp-1 group-hover:text-blue-600 transition-colors">
+          <h3 className={`font-extrabold text-slate-900 mt-1 line-clamp-1 group-hover:text-blue-600 transition-colors ${compact ? 'text-xs' : 'text-base'}`}>
             {name}
           </h3>
-          {/* Red Alert: Vence Hoy */}
-          <div className="mt-1.5 flex items-center">
-            <span className="inline-flex items-center gap-1 rounded-full bg-red-50 px-2.5 py-0.5 text-[10px] font-bold text-red-600">
+          {/* Alert: Expiry Status with dynamic color indicator */}
+          <div className={`flex items-center ${compact ? 'mt-1' : 'mt-1.5'}`}>
+            <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-bold ${getExpiryStyle()}`}>
               <Clock className="h-3 w-3 animate-pulse" />
               {expiryText}
             </span>
@@ -75,17 +88,17 @@ export default function ProductCard({ product, onAddToCart }) {
 
         <div>
           {/* Prices Row */}
-          <div className="flex items-center justify-between mt-4">
-            <div className="flex items-baseline gap-2">
-              <span className="text-lg font-black text-blue-600">
+          <div className="flex items-center justify-between mt-3">
+            <div className="flex items-baseline gap-1.5">
+              <span className={`font-black text-blue-600 ${compact ? 'text-sm' : 'text-lg'}`}>
                 {formatCurrency(price)}
               </span>
-              <span className="text-xs font-semibold text-slate-400 line-through">
+              <span className={`font-semibold text-slate-400 line-through ${compact ? 'text-[10px]' : 'text-xs'}`}>
                 {formatCurrency(originalPrice)}
               </span>
             </div>
             {/* Discount Badge */}
-            <span className="rounded-lg bg-orange-100 px-2 py-1 text-[10px] font-extrabold text-orange-700">
+            <span className={`rounded-lg bg-orange-100 font-extrabold text-orange-700 ${compact ? 'px-1.5 py-0.5 text-[9px]' : 'px-2 py-1 text-[10px]'}`}>
               -{discount}%
             </span>
           </div>
@@ -94,7 +107,7 @@ export default function ProductCard({ product, onAddToCart }) {
           <button
             onClick={handleAddToCart}
             disabled={isAdded}
-            className={`w-full mt-4 flex items-center justify-center gap-2 rounded-2xl py-3 px-4 text-xs font-black tracking-wider uppercase transition-all duration-300 ${
+            className={`w-full flex items-center justify-center gap-2 rounded-2xl text-xs font-black tracking-wider uppercase transition-all duration-300 ${compact ? 'mt-2.5 py-2 px-3 text-[10px]' : 'mt-4 py-3 px-4'} ${
               isAdded
                 ? 'bg-green-600 text-white shadow-md shadow-green-100 scale-95'
                 : 'bg-blue-600 text-white shadow-md shadow-blue-100 hover:bg-blue-700 hover:shadow-blue-200 active:scale-95'
@@ -102,13 +115,13 @@ export default function ProductCard({ product, onAddToCart }) {
           >
             {isAdded ? (
               <>
-                <Check className="h-4 w-4" />
+                <Check className="h-3.5 w-3.5" />
                 Añadido
               </>
             ) : (
               <>
-                <ShoppingCart className="h-4 w-4" />
-                Añadir al Carrito
+                <ShoppingCart className="h-3.5 w-3.5" />
+                Añadir
               </>
             )}
           </button>

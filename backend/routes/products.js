@@ -7,6 +7,106 @@ import { query } from '../db.js';
 
 const router = Router();
 
+// ── GET /api/products/catalog ───────────────────────────
+// Obtiene todos los productos activos para el catálogo general,
+// calcula la distancia real o asigna distancia simulada.
+router.get('/products/catalog', async (req, res) => {
+  try {
+    const lng = parseFloat(req.query.lng) || -74.068;
+    const lat = parseFloat(req.query.lat) || 4.632;
+
+    const viewerRole = (req.query.role || '').toLowerCase();
+    const isTendero = viewerRole === 'tienda' || viewerRole === 'tendero';
+
+    let queryStr = `
+      SELECT p.id_producto as id, 
+              p.id_usuario, 
+              p.nombre_producto as name, 
+              p.costo_original as original_price, 
+              p.costo_con_descuento as price, 
+              p.cantidad_disponible as stock, 
+              p.fecha_vencimiento, 
+              p.categoria, 
+              p.descripcion, 
+              p.imagen_url as image,
+              COALESCE(t.nombre_establecimiento, u.nombres || \' \' || COALESCE(u.apellidos, \'\')) AS store,
+              COALESCE(
+                ST_DistanceSphere(ubi.coordenadas::geometry, ST_SetSRID(ST_MakePoint($1, $2), 4326)) / 1000.0,
+                (1.5 + (p.id_usuario % 10) * 0.4)
+              ) AS distance,
+              EXTRACT(DAY FROM (p.fecha_vencimiento::timestamp - CURRENT_TIMESTAMP)) AS dias_para_vencer,
+              r_sel.tipo_rol AS seller_role,
+              u.foto_perfil AS store_logo
+       FROM t_productos p
+       JOIN t_usuarios u ON p.id_usuario = u.id_usuario
+       JOIN t_roles r_sel ON u.id_rol = r_sel.id_rol
+       LEFT JOIN t_datos_tienda t ON p.id_usuario = t.id_usuario
+       LEFT JOIN t_ubicaciones ubi ON p.id_usuario = ubi.id_usuario AND ubi.es_principal = true
+       WHERE p.id_estado IN (1, 4, 6) AND p.cantidad_disponible > 0
+    `;
+
+    if (!isTendero) {
+      queryStr += ` AND r_sel.tipo_rol NOT IN ('Campesino', 'Productor')`;
+    }
+
+    queryStr += ` ORDER BY distance ASC`;
+
+    const result = await query(queryStr, [lng, lat]);
+
+    const mapCategoryToKey = (categoryName) => {
+      const cat = (categoryName || '').toLowerCase().trim();
+      if (cat.includes('fruta')) return 'frutas';
+      if (cat.includes('verdura') || cat.includes('vegetal') || cat.includes('tuberculo') || cat.includes('tubérculo')) return 'verduras';
+      if (cat.includes('grano')) return 'granos';
+      if (cat.includes('carne') || cat.includes('carniceria') || cat.includes('carnicería')) return 'carnes';
+      if (cat.includes('lacteo') || cat.includes('lácteo')) return 'lacteos';
+      if (cat.includes('panaderia') || cat.includes('panadería') || cat.includes('pan')) return 'panaderia';
+      if (cat.includes('postre') || cat.includes('dulce')) return 'postres';
+      if (cat.includes('comida rapida') || cat.includes('comida rápida') || cat.includes('rapida') || cat.includes('rápida')) return 'rapida';
+      return cat;
+    };
+
+    const formattedData = result.rows.map(row => {
+      const price = parseFloat(row.price || row.original_price);
+      const originalPrice = parseFloat(row.original_price);
+      const discount = originalPrice > 0 ? Math.round(((originalPrice - price) / originalPrice) * 100) : 0;
+      
+      const diasParaVencer = Math.ceil(row.dias_para_vencer);
+      let expiryText = 'Vence Hoy';
+      if (diasParaVencer < 0) {
+        expiryText = 'Vencido';
+      } else if (diasParaVencer === 0) {
+        expiryText = 'Vence Hoy';
+      } else if (diasParaVencer === 1) {
+        expiryText = 'Vence Mañana';
+      } else {
+        expiryText = `Vence en ${diasParaVencer} días`;
+      }
+
+      return {
+        id: row.id,
+        name: row.name.toUpperCase(),
+        store: row.store,
+        category: row.categoria.toUpperCase(),
+        categoryKey: mapCategoryToKey(row.categoria),
+        distance: parseFloat(parseFloat(row.distance).toFixed(1)),
+        image: row.image || 'https://images.unsplash.com/photo-1542838132-92c53300491e?w=600&auto=format&fit=crop&q=80',
+        price: price,
+        originalPrice: originalPrice,
+        discount: discount,
+        expiryText: expiryText,
+        diasParaVencer: diasParaVencer,
+        storeLogo: row.store_logo
+      };
+    });
+
+    res.status(200).json({ status: 'ok', data: formattedData });
+  } catch (err) {
+    console.error('❌ Error al obtener catálogo de productos:', err.message);
+    res.status(500).json({ status: 'error', message: 'Error al obtener catálogo de productos.', detail: err.message });
+  }
+});
+
 // ── GET /api/products/seller/:userId ────────────────────
 // Obtiene todos los productos de un vendedor (campesino o tienda)
 router.get('/products/seller/:userId', async (req, res) => {

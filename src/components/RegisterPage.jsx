@@ -192,13 +192,13 @@ export default function RegisterPage({ onBack, onRegisterSuccess, onOpenLogin })
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50/40 font-sans">
+    <div className="min-h-screen bg-slate-50 font-sans flex flex-col">
 
       {/* ── Page Header ── */}
       <div className="sticky top-0 z-20 bg-white/90 backdrop-blur-md border-b border-slate-100 px-4 sm:px-8 py-4 flex items-center gap-4">
         <button
           onClick={onBack}
-          className="flex items-center gap-2 text-slate-600 hover:text-slate-900 text-sm font-semibold transition-colors"
+          className="flex items-center gap-2 text-slate-600 hover:text-slate-900 text-sm font-semibold transition-colors cursor-pointer"
         >
           <ArrowLeft className="h-4 w-4" />
           Volver
@@ -210,25 +210,22 @@ export default function RegisterPage({ onBack, onRegisterSuccess, onOpenLogin })
         </div>
       </div>
 
-      {/* ── Two-Column Layout ── */}
-      <div className="mx-auto max-w-6xl px-4 sm:px-8 py-10 lg:py-16 grid lg:grid-cols-2 gap-12 lg:gap-20 items-start">
-
-        {/* ════ LEFT: Registration Form ════ */}
-        <div>
-          <div className="mb-8">
+      {/* ── Form Card Area ── */}
+      <div className="flex-grow flex items-center justify-center p-4 sm:p-8 md:p-12 lg:py-16">
+        <div className="w-full max-w-xl bg-white rounded-3xl shadow-xl border border-slate-100 p-6 sm:p-10">
+          <div className="mb-6">
             <span className="inline-block rounded-full bg-blue-50 px-3 py-1 text-xs font-bold text-blue-700 mb-3 tracking-wider uppercase">
               Nuevo Cliente
             </span>
-            <h1 className="text-3xl sm:text-4xl font-black text-slate-900 leading-tight tracking-tight">
-              Crea tu cuenta<br />
-              <span className="text-blue-600">gratis en segundos</span>
+            <h1 className="text-2xl sm:text-3xl font-black text-slate-900 leading-tight tracking-tight">
+              Crea tu cuenta <span className="text-blue-600">gratis</span>
             </h1>
-            <p className="mt-3 text-sm text-slate-500 max-w-md">
-              Únete a miles de colombianos que ya rescatan alimentos de calidad, ahorran dinero y generan impacto social positivo.
+            <p className="mt-2 text-xs text-slate-500">
+              Únete a miles de colombianos que ya rescatan alimentos de calidad, ahorran dinero y apoyan al medio ambiente.
             </p>
           </div>
 
-          <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+          <form onSubmit={handleSubmit} className="flex flex-col gap-4">
             {/* Row: Nombre & Apellido */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <InputField
@@ -284,7 +281,7 @@ export default function RegisterPage({ onBack, onRegisterSuccess, onOpenLogin })
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 cursor-pointer"
                 >
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
@@ -305,7 +302,7 @@ export default function RegisterPage({ onBack, onRegisterSuccess, onOpenLogin })
                 <button
                   type="button"
                   onClick={() => setShowConfirm(!showConfirm)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 cursor-pointer"
                 >
                   {showConfirm ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
@@ -318,7 +315,7 @@ export default function RegisterPage({ onBack, onRegisterSuccess, onOpenLogin })
               <div className="flex gap-3 flex-wrap">
                 {['Hombre', 'Mujer', 'Prefiero no decir'].map((g) => (
                   <label key={g} className="flex items-center gap-2 cursor-pointer group">
-                    <input
+                     <input
                       type="radio"
                       name="genero"
                       value={g}
@@ -363,7 +360,7 @@ export default function RegisterPage({ onBack, onRegisterSuccess, onOpenLogin })
             <button
               type="submit"
               disabled={loading}
-              className="w-full mt-2 rounded-2xl bg-blue-600 py-4 text-sm font-black text-white tracking-wider uppercase shadow-lg shadow-blue-200 hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed active:scale-[0.98] transition-all duration-200 flex items-center justify-center gap-2"
+              className="w-full mt-2 rounded-2xl bg-blue-600 py-3.5 text-sm font-black text-white tracking-wider uppercase shadow-lg shadow-blue-200 hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed active:scale-[0.98] transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer"
             >
               {loading ? (
                 <><svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>Registrando...</>
@@ -371,7 +368,7 @@ export default function RegisterPage({ onBack, onRegisterSuccess, onOpenLogin })
             </button>
 
             {/* Ya tengo cuenta */}
-            <p className="text-center text-xs text-slate-500 pb-2">
+            <p className="text-center text-xs text-slate-500 pb-2 mt-2">
               ¿Ya tienes cuenta?{' '}
               <button
                 type="button"
@@ -383,119 +380,7 @@ export default function RegisterPage({ onBack, onRegisterSuccess, onOpenLogin })
             </p>
           </form>
         </div>
-
-        {/* ════ RIGHT: Social Login Panel ════ */}
-        <div className="flex flex-col gap-6">
-
-          {/* Card */}
-          <div className="rounded-3xl bg-white border border-slate-100 shadow-xl p-8 flex flex-col items-center text-center">
-
-            {/* Branding */}
-            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-600 text-white font-black text-2xl shadow-md shadow-blue-200 mb-4">
-              S
-            </div>
-            <h2 className="text-xl font-black text-slate-900 leading-tight mb-1">
-              Ingresa rápidamente
-            </h2>
-            <p className="text-xs text-slate-400 mb-8 max-w-xs">
-              Usa una de tus cuentas existentes para registrarte o iniciar sesión en un solo clic.
-            </p>
-
-            {/* Social Buttons */}
-            <div className="flex flex-col gap-3 w-full">
-
-              {/* Google */}
-              <button
-                type="button"
-                onClick={() => {
-                  setSocialProvider('Google');
-                  setIsSocialModalOpen(true);
-                }}
-                className="flex items-center w-full bg-blue-600 hover:bg-blue-700 text-white rounded-full py-3.5 px-5 shadow-md shadow-blue-100 transition-all duration-200 hover:scale-105 active:scale-95 gap-3 cursor-pointer"
-              >
-                <div className="h-7 w-7 rounded-full bg-white flex items-center justify-center shrink-0">
-                  <GoogleIcon />
-                </div>
-                <span className="text-xs font-extrabold tracking-wider uppercase flex-1 text-center">
-                  Continuar con Google
-                </span>
-              </button>
-
-              {/* Celular */}
-              <button
-                type="button"
-                onClick={() => alert('Registro con Celular próximamente.')}
-                className="flex items-center w-full bg-emerald-500 hover:bg-emerald-600 text-white rounded-full py-3.5 px-5 shadow-md shadow-emerald-100 transition-all duration-200 hover:scale-105 active:scale-95 gap-3 cursor-pointer"
-              >
-                <Phone className="h-5 w-5 shrink-0" />
-                <span className="text-xs font-extrabold tracking-wider uppercase flex-1 text-center">
-                  Continuar con tu celular
-                </span>
-              </button>
-
-              {/* Facebook */}
-              <button
-                type="button"
-                onClick={() => {
-                  setSocialProvider('Facebook');
-                  setIsSocialModalOpen(true);
-                }}
-                className="flex items-center w-full bg-[#1877F2] hover:bg-[#166fe5] text-white rounded-full py-3.5 px-5 shadow-md shadow-blue-100/50 transition-all duration-200 hover:scale-105 active:scale-95 gap-3 cursor-pointer"
-              >
-                <FacebookIcon />
-                <span className="text-xs font-extrabold tracking-wider uppercase flex-1 text-center">
-                  Continuar con Facebook
-                </span>
-              </button>
-
-              {/* Apple */}
-              <button
-                type="button"
-                onClick={() => {
-                  setSocialProvider('Apple');
-                  setIsSocialModalOpen(true);
-                }}
-                className="flex items-center w-full bg-black hover:bg-slate-800 text-white rounded-full py-3.5 px-5 shadow-md shadow-slate-300/20 transition-all duration-200 hover:scale-105 active:scale-95 gap-3 cursor-pointer"
-              >
-                <AppleIcon />
-                <span className="text-xs font-extrabold tracking-wider uppercase flex-1 text-center">
-                  Continuar con Apple
-                </span>
-              </button>
-
-              {/* Outlined — Ya tengo cuenta */}
-              <div className="h-px bg-slate-100 my-1" />
-              <button
-                type="button"
-                onClick={onOpenLogin}
-                className="flex items-center justify-center w-full bg-white border-2 border-green-400 text-emerald-600 hover:bg-emerald-50/60 rounded-full py-3.5 px-5 transition-all duration-200 hover:scale-105 active:scale-95 cursor-pointer"
-              >
-                <span className="text-xs font-black tracking-wider uppercase">
-                  Ya tengo cuenta
-                </span>
-              </button>
-            </div>
-
-          </div>
-
-          {/* Impact blurb */}
-          <div className="rounded-2xl bg-emerald-50/60 border border-emerald-100 px-6 py-5 flex flex-col gap-1">
-            <span className="text-xs font-bold text-emerald-700 uppercase tracking-wider">🌿 ¿Por qué unirte?</span>
-            <p className="text-xs text-slate-600 leading-relaxed mt-1">
-              Al registrarte como cliente en SADYA accedes a <strong>descuentos de hasta el 60%</strong> en alimentos de calidad, 
-              contribuyes a reducir el desperdicio de comida y <strong>apoyas a familias vulnerables</strong> en Colombia.
-            </p>
-          </div>
-        </div>
       </div>
-
-      {/* Social Auth Modal */}
-      <SocialAuthModal
-        isOpen={isSocialModalOpen}
-        onClose={() => setIsSocialModalOpen(false)}
-        provider={socialProvider}
-        onSuccess={handleSocialSuccess}
-      />
     </div>
   );
 }

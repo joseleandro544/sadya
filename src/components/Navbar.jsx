@@ -31,7 +31,8 @@ export default function Navbar({
   onGoToHome,
   onSelectCategory,
   onLogout,
-  onOpenSellerProducts
+  onOpenSellerProducts,
+  onOpenProfile
 }) {
   const [isCategoriesAccordionOpen, setIsCategoriesAccordionOpen] = useState(false);
   const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
@@ -178,8 +179,12 @@ export default function Navbar({
                 >
                   <div className="p-1">
                     {user ? (
-                      <div className="h-6 w-6 rounded-full bg-blue-100 border border-blue-200 flex items-center justify-center text-blue-700 text-xs font-bold transition-transform group-hover:scale-110">
-                        {user.nombres[0].toUpperCase()}
+                      <div className="h-6 w-6 rounded-full bg-blue-100 border border-blue-200 flex items-center justify-center text-blue-700 text-xs font-bold transition-transform group-hover:scale-110 overflow-hidden">
+                        {user.foto_perfil ? (
+                          <img src={user.foto_perfil} alt="Avatar" className="h-full w-full object-cover" />
+                        ) : (
+                          user.nombres[0].toUpperCase()
+                        )}
                       </div>
                     ) : (
                       <User className="h-5 w-5 transition-transform group-hover:scale-110" />
@@ -203,7 +208,7 @@ export default function Navbar({
                     <button 
                       onClick={() => {
                         setIsUserDropdownOpen(false);
-                        alert(`Mi Perfil:\nNombre: ${user.nombres} ${user.apellidos || ''}\nCelular: ${user.telefono || 'No registrado'}\nRol: ${user.rol}`);
+                        if (onOpenProfile) onOpenProfile();
                       }}
                       className="w-full text-left rounded-xl px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-blue-50/70 hover:text-blue-600 transition-all duration-200 cursor-pointer"
                     >
@@ -365,8 +370,12 @@ export default function Navbar({
             <div className="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
               {user ? (
                 <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-full bg-blue-100 border border-blue-200 flex items-center justify-center text-blue-700 text-sm font-extrabold shadow-sm">
-                    {user.nombres[0].toUpperCase()}
+                  <div className="h-10 w-10 rounded-full bg-blue-100 border border-blue-200 flex items-center justify-center text-blue-700 text-sm font-extrabold shadow-sm overflow-hidden">
+                    {user.foto_perfil ? (
+                      <img src={user.foto_perfil} alt="Avatar" className="h-full w-full object-cover" />
+                    ) : (
+                      user.nombres[0].toUpperCase()
+                    )}
                   </div>
                   <div>
                     <h4 className="text-sm font-bold text-slate-900 leading-tight">
@@ -376,7 +385,7 @@ export default function Navbar({
                       onClick={(e) => {
                         e.preventDefault();
                         setIsMobileMenuOpen(false);
-                        alert(`Mi Perfil:\nNombre: ${user.nombres} ${user.apellidos || ''}\nCelular: ${user.telefono || 'No registrado'}\nRol: ${user.rol}`);
+                        if (onOpenProfile) onOpenProfile();
                       }}
                       className="text-xs font-semibold text-slate-400 hover:text-blue-600 transition-colors block text-left"
                     >
@@ -558,7 +567,7 @@ export default function Navbar({
                   onClick={() => {
                     setIsMobileMenuOpen(false);
                     if (user) {
-                      alert(`Mi Cuenta:\nNombre: ${user.nombres} ${user.apellidos || ''}\nCelular: ${user.telefono || 'No registrado'}\nRol: ${user.rol}`);
+                      if (onOpenProfile) onOpenProfile();
                     } else {
                       onOpenLogin();
                     }

@@ -418,7 +418,8 @@ export default function DelivererRegisterPage({ onBack, onRegisterSuccess }) {
                   }`}
                 >
                   <option value="" disabled>Selecciona tu vehículo</option>
-                  <option value="moto">Moto / Bicicleta</option>
+                  <option value="moto">Motocicleta</option>
+                  <option value="bicicleta">Bicicleta</option>
                   <option value="carro">Automóvil</option>
                   <option value="camion">Camión de carga</option>
                 </select>

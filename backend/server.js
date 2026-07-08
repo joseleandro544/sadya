@@ -13,6 +13,7 @@ import healthRoutes from './routes/health.js';
 import registerRoutes from './routes/register.js';
 import authRoutes from './routes/auth.js';
 import productRoutes from './routes/products.js';
+import profileRoutes from './routes/profile.js';
 
 // ── Inicializar Express ─────────────────────────────────
 const app = express();
@@ -33,6 +34,7 @@ app.use('/api', healthRoutes);           // GET /api/health
 app.use('/api', registerRoutes);         // POST /api/register/*
 app.use('/api', authRoutes);             // POST /api/auth/*
 app.use('/api', productRoutes);          // GET/POST /api/products/*
+app.use('/api', profileRoutes);          // GET/PUT /api/profile/*
 
 // ── Ruta raíz informativa ───────────────────────────────
 app.get('/', (_req, res) => {
