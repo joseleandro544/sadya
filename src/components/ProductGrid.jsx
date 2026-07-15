@@ -7,6 +7,7 @@ export default function ProductGrid({
   selectedCategory, 
   setSelectedCategory,
   onAddToCart,
+  onOpenProductModal,
   userPreferences = [],
   setUserPreferences,
   lat = 4.632,
@@ -248,6 +249,7 @@ export default function ProductGrid({
                           product={product} 
                           onAddToCart={onAddToCart} 
                           compact={true}
+                          onOpenModal={onOpenProductModal}
                         />
                       </div>
                     ))}
@@ -280,6 +282,7 @@ export default function ProductGrid({
                 key={product.id} 
                 product={product} 
                 onAddToCart={onAddToCart} 
+                onOpenModal={onOpenProductModal}
               />
             ))}
           </div>

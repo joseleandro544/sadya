@@ -27,7 +27,8 @@ app.use(cors({
   credentials: true,
 }));
 
-app.use(express.json());                 // Parsear body JSON en peticiones POST/PUT
+app.use(express.json({ limit: '10mb' }));                 // Parsear body JSON en peticiones POST/PUT (aumentado para base64)
+app.use(express.urlencoded({ limit: '10mb', extended: true }));
 
 // ── Registrar Rutas ─────────────────────────────────────
 app.use('/api', healthRoutes);           // GET /api/health

@@ -15,6 +15,7 @@ import LoginPage from './components/LoginPage';
 import SellerProductsPage from './components/SellerProductsPage';
 import UserProfilePage from './components/UserProfilePage';
 import RecoverPasswordPage from './components/RecoverPasswordPage';
+import ProductDetailModal from './components/ProductDetailModal';
 import { X, Trash2, ShieldAlert, HeartHandshake, CheckCircle } from 'lucide-react';
 
 const getLocationCoords = (locationStr) => {
@@ -42,23 +43,29 @@ function App() {
   });
   const [currentPage, setCurrentPage] = useState('home'); // 'home' or 'register'
   const [toast, setToast] = useState(null);
+  const [selectedProductForModal, setSelectedProductForModal] = useState(null);
 
   // Add to cart handler
-  const handleAddToCart = (product) => {
+  const handleAddToCart = (product, quantity = 1) => {
+    if (product.diasParaVencer < 0 || product.expiryText === 'Vencido') {
+      showToast('⚠️ Producto vencido: compra prohibida. Solo disponible para donar.');
+      return;
+    }
+
     setCartItems((prev) => {
       const existing = prev.find(item => item.product.id === product.id);
       if (existing) {
         return prev.map(item => 
           item.product.id === product.id 
-            ? { ...item, quantity: item.quantity + 1 }
+            ? { ...item, quantity: item.quantity + quantity }
             : item
         );
       }
-      return [...prev, { product, quantity: 1 }];
+      return [...prev, { product, quantity }];
     });
 
     // Show custom toast notification
-    showToast(`¡Añadiste ${product.name} al carrito!`);
+    showToast(`¡Añadiste ${quantity}x ${product.name} al carrito!`);
   };
 
   const showToast = (message) => {
@@ -357,6 +364,7 @@ function App() {
             selectedCategory={selectedCategory}
             setSelectedCategory={setSelectedCategory}
             onAddToCart={handleAddToCart}
+            onOpenProductModal={setSelectedProductForModal}
             lat={lat}
             lng={lng}
             user={user}
@@ -375,6 +383,7 @@ function App() {
           selectedCategory="all"
           setSelectedCategory={setSelectedCategory}
           onAddToCart={handleAddToCart}
+          onOpenProductModal={setSelectedProductForModal}
           userPreferences={userPreferences}
           setUserPreferences={setUserPreferences}
           lat={lat}
@@ -591,6 +600,15 @@ function App() {
           <CheckCircle className="h-5 w-5 text-green-500 shrink-0" />
           <span className="text-xs font-bold tracking-tight">{toast}</span>
         </div>
+      )}
+
+      {/* Product Detail Modal */}
+      {selectedProductForModal && (
+        <ProductDetailModal
+          product={selectedProductForModal}
+          onClose={() => setSelectedProductForModal(null)}
+          onAddToCart={handleAddToCart}
+        />
       )}
     </div>
   );

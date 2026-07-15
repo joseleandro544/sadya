@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { ShoppingCart, Check, Clock } from 'lucide-react';
 
-export default function ProductCard({ product, onAddToCart, compact = false }) {
+export default function ProductCard({ product, onAddToCart, compact = false, onOpenModal }) {
   const {
     id,
     name,
@@ -13,11 +13,15 @@ export default function ProductCard({ product, onAddToCart, compact = false }) {
     originalPrice,
     discount,
     expiryText = "Vence Hoy",
+    diasParaVencer,
   } = product;
 
   const [isAdded, setIsAdded] = useState(false);
+  const isExpired = diasParaVencer < 0 || expiryText === 'Vencido';
 
-  const handleAddToCart = () => {
+  const handleAddToCart = (e) => {
+    if (e) e.stopPropagation();
+    if (isExpired) return;
     onAddToCart(product);
     setIsAdded(true);
     setTimeout(() => setIsAdded(false), 1500);
@@ -45,7 +49,10 @@ export default function ProductCard({ product, onAddToCart, compact = false }) {
   };
 
   return (
-    <div className={`group flex flex-col bg-white border border-slate-100 rounded-3xl overflow-hidden shadow-sm hover:shadow-premium transition-all duration-300 hover:-translate-y-1 ${compact ? 'max-w-[210px]' : ''}`}>
+    <div 
+      onClick={() => onOpenModal && onOpenModal(product)}
+      className={`group flex flex-col bg-white border border-slate-100 rounded-3xl overflow-hidden shadow-sm hover:shadow-premium transition-all duration-300 hover:-translate-y-1 cursor-pointer ${compact ? 'max-w-[210px]' : ''}`}
+    >
       {/* 50% Top: Image container */}
       <div className={`relative w-full overflow-hidden bg-slate-100 ${compact ? 'h-32' : 'h-48'}`}>
         <img
@@ -106,17 +113,24 @@ export default function ProductCard({ product, onAddToCart, compact = false }) {
           {/* CTA Button */}
           <button
             onClick={handleAddToCart}
-            disabled={isAdded}
+            disabled={isAdded || isExpired}
             className={`w-full flex items-center justify-center gap-2 rounded-2xl text-xs font-black tracking-wider uppercase transition-all duration-300 ${compact ? 'mt-2.5 py-2 px-3 text-[10px]' : 'mt-4 py-3 px-4'} ${
               isAdded
                 ? 'bg-green-600 text-white shadow-md shadow-green-100 scale-95'
-                : 'bg-blue-600 text-white shadow-md shadow-blue-100 hover:bg-blue-700 hover:shadow-blue-200 active:scale-95'
+                : isExpired
+                  ? 'bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed'
+                  : 'bg-blue-600 text-white shadow-md shadow-blue-100 hover:bg-blue-700 hover:shadow-blue-200 active:scale-95'
             }`}
           >
             {isAdded ? (
               <>
                 <Check className="h-3.5 w-3.5" />
                 Añadido
+              </>
+            ) : isExpired ? (
+              <>
+                <Clock className="h-3.5 w-3.5" />
+                Vencido
               </>
             ) : (
               <>

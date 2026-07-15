@@ -42,7 +42,7 @@ router.get('/products/catalog', async (req, res) => {
        JOIN t_roles r_sel ON u.id_rol = r_sel.id_rol
        LEFT JOIN t_datos_tienda t ON p.id_usuario = t.id_usuario
        LEFT JOIN t_ubicaciones ubi ON p.id_usuario = ubi.id_usuario AND ubi.es_principal = true
-       WHERE p.id_estado IN (1, 4, 6) AND p.cantidad_disponible > 0
+       WHERE p.id_estado IN (1, 4, 6) AND p.cantidad_disponible > 0 AND p.fecha_vencimiento::date >= CURRENT_DATE
     `;
 
     if (!isTendero) {
@@ -246,6 +246,35 @@ router.post('/products/donate', async (req, res) => {
   } catch (err) {
     console.error('❌ Error en donación de producto:', err.message);
     res.status(500).json({ status: 'error', message: 'Error interno al procesar la donación.', detail: err.message });
+  }
+});
+
+// ── POST /api/products/discard ──────────────────────────
+// Descarta un producto vencido (lo marca como Agotado y stock a 0)
+router.post('/products/discard', async (req, res) => {
+  try {
+    const { id_producto, id_usuario } = req.body;
+
+    if (!id_producto || !id_usuario) {
+      return res.status(400).json({ status: 'error', message: 'ID del producto y de usuario son obligatorios.' });
+    }
+
+    const result = await query(
+      `UPDATE t_productos 
+       SET id_estado = 5, cantidad_disponible = 0 
+       WHERE id_producto = $1 AND id_usuario = $2
+       RETURNING *`,
+      [id_producto, id_usuario]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ status: 'error', message: 'Producto no encontrado o no pertenece a este usuario.' });
+    }
+
+    res.status(200).json({ status: 'ok', message: 'El producto vencido ha sido descartado y retirado con éxito.' });
+  } catch (err) {
+    console.error('❌ Error al descartar producto:', err.message);
+    res.status(500).json({ status: 'error', message: 'Error interno al descartar el producto.', detail: err.message });
   }
 });
 

@@ -39,6 +39,8 @@ export default function UserProfilePage({ user, onBack, onProfileUpdate }) {
     tiene_transporte_propio: false
   });
 
+  const [isInitialIdentityPlaceholder, setIsInitialIdentityPlaceholder] = useState(false);
+  const [isInitialNitPlaceholder, setIsInitialNitPlaceholder] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saveLoading, setSaveLoading] = useState(false);
   const [error, setError] = useState('');
@@ -70,8 +72,15 @@ export default function UserProfilePage({ user, onBack, onProfileUpdate }) {
           formattedBirthDate = new Date(result.data.fecha_nacimiento).toISOString().split('T')[0];
         }
         
+        const identityVal = result.data.numero_identidad || result.data.no_documento || '';
+        const nitVal = result.data.nit || '';
+        
+        setIsInitialIdentityPlaceholder(!identityVal || identityVal.trim() === '' || identityVal === 'Sin Documento');
+        setIsInitialNitPlaceholder(!nitVal || nitVal.trim() === '' || nitVal === 'Sin NIT');
+        
         setProfileData({
           ...result.data,
+          numero_identidad: identityVal,
           fecha_nacimiento: formattedBirthDate
         });
       } else {
@@ -169,6 +178,9 @@ export default function UserProfilePage({ user, onBack, onProfileUpdate }) {
       if (res.ok && result.status === 'ok') {
         setSuccess(result.message || '¡Tu perfil ha sido actualizado con éxito!');
         
+        setIsInitialIdentityPlaceholder(false);
+        setIsInitialNitPlaceholder(false);
+        
         // Notify parent application to update header names if needed
         if (onProfileUpdate) {
           onProfileUpdate({
@@ -245,6 +257,13 @@ export default function UserProfilePage({ user, onBack, onProfileUpdate }) {
 
   // Render a special read-only fiscal warning field
   const renderReadOnlyFiscalField = (label, name, value, type = 'text') => {
+    // Determine placeholder status using the initial page-load flags
+    const isPlaceholder = name === 'numero_identidad' ? isInitialIdentityPlaceholder : isInitialNitPlaceholder;
+    
+    if (isPlaceholder) {
+      return renderField(label, name, type, `Registra tu ${label.toLowerCase()}`);
+    }
+
     return (
       <div className="flex flex-col gap-1.5 w-full relative">
         <div className="flex items-center gap-1.5">

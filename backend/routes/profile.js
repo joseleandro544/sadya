@@ -150,6 +150,8 @@ router.put('/profile/:userId', async (req, res) => {
       ciudad,
       foto_perfil,
       fecha_nacimiento,
+      numero_identidad,
+      nit,
       // Tienda specific
       nombre_establecimiento,
       direccion_local,
@@ -187,8 +189,9 @@ router.put('/profile/:userId', async (req, res) => {
     // 2. Actualizar tabla base t_usuarios
     await query(
       `UPDATE t_usuarios
-       SET nombres = $1, apellidos = $2, email = $3, telefono = $4, genero = $5, foto_perfil = $6, fecha_nacimiento = $7
-       WHERE id_usuario = $8`,
+       SET nombres = $1, apellidos = $2, email = $3, telefono = $4, genero = $5, foto_perfil = $6, fecha_nacimiento = $7,
+           numero_identidad = COALESCE(NULLIF(numero_identidad, ''), $8)
+       WHERE id_usuario = $9`,
       [
         nombres?.trim() || null,
         apellidos?.trim() || null,
@@ -197,6 +200,7 @@ router.put('/profile/:userId', async (req, res) => {
         genero?.trim() || null,
         foto_perfil || null,
         fecha_nacimiento || null,
+        numero_identidad?.trim() || null,
         userId
       ]
     );
@@ -228,8 +232,9 @@ router.put('/profile/:userId', async (req, res) => {
       if (storeCheck.rows.length > 0) {
         await query(
           `UPDATE t_datos_tienda
-           SET nombre_establecimiento = $1, direccion_local = $2, banco = $3, numero_cuenta = $4, tipo_cuenta = $5, tiene_domicilio_propio = $6
-           WHERE id_usuario = $7`,
+           SET nombre_establecimiento = $1, direccion_local = $2, banco = $3, numero_cuenta = $4, tipo_cuenta = $5, tiene_domicilio_propio = $6,
+               nit = COALESCE(NULLIF(NULLIF(nit, 'Sin NIT'), ''), $7)
+           WHERE id_usuario = $8`,
           [
             nombre_establecimiento?.trim() || 'Establecimiento',
             direccion_local?.trim() || direccion?.trim() || null,
@@ -237,16 +242,18 @@ router.put('/profile/:userId', async (req, res) => {
             numero_cuenta?.trim() || null,
             tipo_cuenta?.trim() || null,
             tiene_domicilio_propio || false,
+            nit?.trim() || null,
             userId
           ]
         );
       } else {
         await query(
           `INSERT INTO t_datos_tienda (id_usuario, nombre_establecimiento, nit, direccion_local, banco, numero_cuenta, tipo_cuenta, tiene_domicilio_propio)
-           VALUES ($1, $2, 'Sin NIT', $3, $4, $5, $6, $7)`,
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
           [
             userId,
             nombre_establecimiento?.trim() || 'Establecimiento',
+            nit?.trim() || 'Sin NIT',
             direccion_local?.trim() || direccion?.trim() || null,
             banco?.trim() || null,
             numero_cuenta?.trim() || null,
@@ -260,23 +267,26 @@ router.put('/profile/:userId', async (req, res) => {
       if (delivererCheck.rows.length > 0) {
         await query(
           `UPDATE t_datos_domiciliario
-           SET direccion_residencia = $1, banco = $2, numero_cuenta = $3, tipo_cuenta = $4, tipo_repartidor = $5
-           WHERE id_usuario = $6`,
+           SET direccion_residencia = $1, banco = $2, numero_cuenta = $3, tipo_cuenta = $4, tipo_repartidor = $5,
+               no_documento = COALESCE(NULLIF(NULLIF(no_documento, 'Sin Documento'), ''), $6)
+           WHERE id_usuario = $7`,
           [
             direccion_residencia?.trim() || direccion?.trim() || null,
             banco?.trim() || null,
             numero_cuenta?.trim() || null,
             tipo_cuenta?.trim() || null,
             tipo_repartidor?.trim() || null,
+            numero_identidad?.trim() || null,
             userId
           ]
         );
       } else {
         await query(
           `INSERT INTO t_datos_domiciliario (id_usuario, no_documento, direccion_residencia, banco, numero_cuenta, tipo_cuenta, tipo_repartidor)
-           VALUES ($1, 'Sin Documento', $2, $3, $4, $5, $6)`,
+           VALUES ($1, $2, $3, $4, $5, $6, $7)`,
           [
             userId,
+            numero_identidad?.trim() || 'Sin Documento',
             direccion_residencia?.trim() || direccion?.trim() || null,
             banco?.trim() || null,
             numero_cuenta?.trim() || null,

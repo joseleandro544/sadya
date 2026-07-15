@@ -6,6 +6,7 @@ export default function CategoryGroupedView({
   selectedCategory,
   setSelectedCategory,
   onAddToCart,
+  onOpenProductModal,
   lat,
   lng,
   user,
@@ -195,7 +196,7 @@ export default function CategoryGroupedView({
                 <div className="flex gap-4">
                   {storeDetailData.level1.map(p => (
                     <div key={p.id} className="w-[210px] shrink-0 snap-start">
-                      <ProductCard product={p} onAddToCart={onAddToCart} compact={true} />
+                      <ProductCard product={p} onAddToCart={onAddToCart} compact={true} onOpenModal={onOpenProductModal} />
                     </div>
                   ))}
                 </div>
@@ -217,7 +218,7 @@ export default function CategoryGroupedView({
                 <div className="flex gap-4">
                   {storeDetailData.level2.map(p => (
                     <div key={p.id} className="w-[210px] shrink-0 snap-start">
-                      <ProductCard product={p} onAddToCart={onAddToCart} compact={true} />
+                      <ProductCard product={p} onAddToCart={onAddToCart} compact={true} onOpenModal={onOpenProductModal} />
                     </div>
                   ))}
                 </div>
@@ -239,7 +240,7 @@ export default function CategoryGroupedView({
                 <div className="flex gap-4">
                   {storeDetailData.level3.map(p => (
                     <div key={p.id} className="w-[210px] shrink-0 snap-start">
-                      <ProductCard product={p} onAddToCart={onAddToCart} compact={true} />
+                      <ProductCard product={p} onAddToCart={onAddToCart} compact={true} onOpenModal={onOpenProductModal} />
                     </div>
                   ))}
                 </div>
@@ -261,7 +262,7 @@ export default function CategoryGroupedView({
                 <div className="flex gap-4">
                   {storeDetailData.others.map(p => (
                     <div key={p.id} className="w-[210px] shrink-0 snap-start">
-                      <ProductCard product={p} onAddToCart={onAddToCart} compact={true} />
+                      <ProductCard product={p} onAddToCart={onAddToCart} compact={true} onOpenModal={onOpenProductModal} />
                     </div>
                   ))}
                 </div>
@@ -347,6 +348,7 @@ export default function CategoryGroupedView({
                         product={product} 
                         onAddToCart={onAddToCart} 
                         compact={true}
+                        onOpenModal={onOpenProductModal}
                       />
                     </div>
                   ))}

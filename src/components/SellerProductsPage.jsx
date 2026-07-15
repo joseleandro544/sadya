@@ -162,6 +162,32 @@ export default function SellerProductsPage({ user, onBack }) {
     }
   };
 
+  const handleDiscard = async (productId) => {
+    if (!window.confirm('¿Confirmas que deseas descartar y dar de baja este producto vencido del inventario?')) return;
+    
+    setError('');
+    setSuccess('');
+    try {
+      const res = await fetch('/api/products/discard', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id_producto: productId,
+          id_usuario: user.id
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.message || 'Error al descartar el producto.');
+      } else {
+        setSuccess('¡El producto vencido ha sido retirado con éxito!');
+        fetchProducts();
+      }
+    } catch (err) {
+      setError('No se pudo conectar con el servidor para descartar el producto.');
+    }
+  };
+
   const getExpirationStatus = (expiryDateStr) => {
     const expiryDate = new Date(expiryDateStr);
     const today = new Date();
@@ -568,15 +594,26 @@ export default function SellerProductsPage({ user, onBack }) {
                       <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500 font-semibold gap-2">
                         <span>Vence: <strong className="text-slate-700">{formattedDate}</strong></span>
 
-                        {/* Donation Trigger Button for Expired/Red products */}
-                        {expiryInfo.color === 'red' && !isDonated && (
-                          <button
-                            type="button"
-                            onClick={() => handleDonate(product.id_producto, product.cantidad_disponible)}
-                            className="bg-red-500 hover:bg-red-600 text-white rounded-lg px-2.5 py-1.5 font-bold transition-all hover:scale-105 active:scale-95 flex items-center gap-1 cursor-pointer"
-                          >
-                            <HeartHandshake className="h-3 w-3" /> Donar
-                          </button>
+                        {/* Expiry Action Buttons (Donate / Discard) */}
+                        {expiryInfo.color === 'red' && !isDonated && product.cantidad_disponible > 0 && (
+                          <div className="flex gap-1.5">
+                            <button
+                              type="button"
+                              onClick={() => handleDonate(product.id_producto, product.cantidad_disponible)}
+                              className="bg-red-500 hover:bg-red-600 text-white rounded-lg px-2 py-1 font-bold transition-all hover:scale-105 active:scale-95 flex items-center gap-0.5 cursor-pointer text-[10px]"
+                              title="Donar este excedente a fundaciones"
+                            >
+                              <HeartHandshake className="h-3 w-3" /> Donar
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleDiscard(product.id_producto)}
+                              className="bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 rounded-lg px-2 py-1 font-bold transition-all hover:scale-105 active:scale-95 flex items-center gap-0.5 cursor-pointer text-[10px]"
+                              title="Descartar y dar de baja del catálogo"
+                            >
+                              <Archive className="h-3 w-3" /> Descartar
+                            </button>
+                          </div>
                         )}
 
                         {isDonated && (

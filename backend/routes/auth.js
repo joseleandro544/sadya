@@ -4,8 +4,8 @@
 
 import { Router } from 'express';
 import bcrypt from 'bcrypt';
-import nodemailer from 'nodemailer';
 import { query } from '../db.js';
+import { sendSMS, sendEmail } from '../services/notificationService.js';
 
 const router = Router();
 
@@ -129,47 +129,14 @@ router.post('/auth/login-code', async (req, res) => {
     const generatedOtp = Math.floor(100000 + Math.random() * 900000).toString();
     otpStore.set(celular.trim(), generatedOtp);
 
-    // Check Twilio credentials
-    const accountSid = process.env.TWILIO_ACCOUNT_SID;
-    const authToken = process.env.TWILIO_AUTH_TOKEN;
-    const fromPhone = process.env.TWILIO_PHONE_NUMBER;
-
     let smsSent = false;
-    let smsError = '';
-
-    if (accountSid && authToken && fromPhone) {
-      try {
-        const formattedPhone = celular.trim().startsWith('+') ? celular.trim() : `+57${celular.trim()}`;
-        const authHeader = Buffer.from(`${accountSid}:${authToken}`).toString('base64');
-        const twilioRes = await fetch(
-          `https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json`,
-          {
-            method: 'POST',
-            headers: {
-              'Authorization': `Basic ${authHeader}`,
-              'Content-Type': 'application/x-www-form-urlencoded',
-            },
-            body: new URLSearchParams({
-              To: formattedPhone,
-              From: fromPhone,
-              Body: `SADYA: Tu codigo de inicio de sesion es ${generatedOtp}. Valido por 5 minutos.`,
-            }),
-          }
-        );
-        const twilioData = await twilioRes.json();
-        if (twilioRes.ok) {
-          smsSent = true;
-          console.log(`📲 SMS OTP enviado con éxito a ${formattedPhone}: SID ${twilioData.sid}`);
-        } else {
-          smsError = twilioData.message;
-          console.error(`❌ Error de Twilio al enviar SMS: ${twilioData.message}`);
-        }
-      } catch (smsErr) {
-        smsError = smsErr.message;
-        console.error(`❌ Error al conectar con Twilio para enviar SMS:`, smsErr.message);
-      }
-    } else {
-      console.log(`⚠️ Twilio no configurado. Código OTP simulado para: ${user.nombres} (Tel: ${user.telefono}) -> [${generatedOtp}]`);
+    try {
+      smsSent = await sendSMS(
+        celular.trim(),
+        `SADYA: Tu codigo de inicio de sesion es ${generatedOtp}. Valido por 5 minutos.`
+      );
+    } catch (smsErr) {
+      console.error(`❌ Error al enviar SMS OTP a ${celular.trim()}:`, smsErr.message);
     }
 
     res.status(200).json({
@@ -301,53 +268,28 @@ router.post('/auth/forgot-password', async (req, res) => {
     const resetToken = Math.floor(100000 + Math.random() * 900000).toString();
     forgotPasswordStore.set(email.trim().toLowerCase(), resetToken);
 
-    // Setup nodemailer
-    const smtpHost = process.env.SMTP_HOST;
-    const smtpPort = parseInt(process.env.SMTP_PORT) || 587;
-    const smtpUser = process.env.SMTP_USER;
-    const smtpPass = process.env.SMTP_PASS;
-
     let emailSent = false;
-    let mailError = '';
-
-    if (smtpUser && smtpPass) {
-      try {
-        const transporter = nodemailer.createTransport({
-          host: smtpHost || 'smtp.gmail.com',
-          port: smtpPort,
-          secure: smtpPort === 465,
-          auth: {
-            user: smtpUser,
-            pass: smtpPass,
-          },
-        });
-
-        await transporter.sendMail({
-          from: `"SADYA Soporte" <${smtpUser}>`,
-          to: user.email,
-          subject: 'SADYA — Código de recuperación de contraseña',
-          html: `
-            <div style="font-family: sans-serif; padding: 20px; max-width: 600px; margin: auto; border: 1px solid #f1f5f9; rounded: 16px;">
-              <h2 style="color: #2563eb; font-weight: 800;">Hola, ${user.nombres}</h2>
-              <p>Has solicitado restablecer la contraseña de tu cuenta en la plataforma SADYA.</p>
-              <p>Tu código de seguridad temporal es:</p>
-              <div style="background-color: #f8fafc; padding: 15px; text-align: center; border-radius: 12px; border: 1px solid #e2e8f0; margin: 20px 0;">
-                <span style="font-size: 24px; font-weight: 900; letter-spacing: 4px; color: #1e293b;">${resetToken}</span>
-              </div>
-              <p style="color: #64748b; font-size: 12px;">Este código es de un solo uso y vencerá en 10 minutos. Si no solicitaste este cambio, por favor ignora este correo.</p>
-              <hr style="border: 0; border-top: 1px solid #f1f5f9; margin: 20px 0;"/>
-              <p style="font-size: 11px; color: #94a3b8; text-align: center;">SADYA Marketplace — Alimentando el futuro, evitando el desperdicio.</p>
-            </div>
-          `,
-        });
-        emailSent = true;
-        console.log(`✉️ Correo de recuperación enviado con éxito a ${user.email}`);
-      } catch (errSend) {
-        mailError = errSend.message;
-        console.error('❌ Error al enviar correo de recuperación con NodeMailer:', errSend.message);
-      }
-    } else {
-      console.log(`⚠️ Servidor SMTP no configurado. Código de recuperación simulado para ${user.email} -> [${resetToken}]`);
+    try {
+      const emailHtml = `
+        <div style="font-family: sans-serif; padding: 20px; max-width: 600px; margin: auto; border: 1px solid #f1f5f9; border-radius: 16px;">
+          <h2 style="color: #2563eb; font-weight: 800;">Hola, ${user.nombres}</h2>
+          <p>Has solicitado restablecer la contraseña de tu cuenta en la plataforma SADYA.</p>
+          <p>Tu código de seguridad temporal es:</p>
+          <div style="background-color: #f8fafc; padding: 15px; text-align: center; border-radius: 12px; border: 1px solid #e2e8f0; margin: 20px 0;">
+            <span style="font-size: 24px; font-weight: 900; letter-spacing: 4px; color: #1e293b;">${resetToken}</span>
+          </div>
+          <p style="color: #64748b; font-size: 12px;">Este código es de un solo uso y vencerá en 10 minutos. Si no solicitaste este cambio, por favor ignora este correo.</p>
+          <hr style="border: 0; border-top: 1px solid #f1f5f9; margin: 20px 0;"/>
+          <p style="font-size: 11px; color: #94a3b8; text-align: center;">SADYA Marketplace — Alimentando el futuro, evitando el desperdicio.</p>
+        </div>
+      `;
+      emailSent = await sendEmail(
+        user.email,
+        'SADYA — Código de recuperación de contraseña',
+        emailHtml
+      );
+    } catch (mailErr) {
+      console.error(`❌ Error al enviar correo de recuperación a ${user.email}:`, mailErr.message);
     }
 
     res.status(200).json({
