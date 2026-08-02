@@ -89,46 +89,58 @@ export default function CategoryGroupedView({
     return Object.values(groups).sort((a, b) => a.distance - b.distance);
   }, [allProducts, selectedCategory, searchQuery]);
 
-  // Detailed view products classification
+  // Detailed view products classification - showing ALL products from the selected store across all categories
   const storeDetailData = useMemo(() => {
     if (!selectedStore) return null;
     
-    // Find store products in current category
-    const storeObj = groupedStores.find(g => g.storeName === selectedStore);
-    if (!storeObj) return null;
+    // Find all products for this store across all categories
+    let storeProducts = allProducts.filter(p => p.store === selectedStore);
 
-    const products = storeObj.products;
+    if (searchQuery.trim() !== '') {
+      const q = searchQuery.toLowerCase();
+      storeProducts = storeProducts.filter(p => 
+        p.name.toLowerCase().includes(q) || 
+        p.store.toLowerCase().includes(q)
+      );
+    }
+
+    if (storeProducts.length === 0) return null;
+
+    const firstProduct = storeProducts[0];
+    const storeName = firstProduct.store;
+    const distance = firstProduct.distance;
+    const storeLogo = firstProduct.storeLogo || '';
 
     // Classification levels based on image requirements:
     // Level 1: Promociones (Los mayores descuentos Y fecha entre 3 a 5 días)
-    const level1 = products.filter(p => p.diasParaVencer >= 3 && p.diasParaVencer <= 5 && p.discount > 0);
+    const level1 = storeProducts.filter(p => p.diasParaVencer >= 3 && p.diasParaVencer <= 5 && p.discount > 0);
     level1.sort((a, b) => b.discount - a.discount);
 
     // Level 2: Los más vendidos (Descuentos Y fecha entre 6 a 15 días)
-    const level2 = products.filter(p => p.diasParaVencer >= 6 && p.diasParaVencer <= 15 && p.discount > 0);
+    const level2 = storeProducts.filter(p => p.diasParaVencer >= 6 && p.diasParaVencer <= 15 && p.discount > 0);
     level2.sort((a, b) => b.discount - a.discount);
 
     // Level 3: Combo (Descuentos Y fecha mas de 15 días)
-    const level3 = products.filter(p => p.diasParaVencer > 15 && p.discount > 0);
+    const level3 = storeProducts.filter(p => p.diasParaVencer > 15 && p.discount > 0);
     level3.sort((a, b) => b.discount - a.discount);
 
     // Other/Regular products of the store
-    const others = products.filter(p => 
+    const others = storeProducts.filter(p => 
       !level1.some(l => l.id === p.id) && 
       !level2.some(l => l.id === p.id) && 
       !level3.some(l => l.id === p.id)
     );
 
     return {
-      storeName: storeObj.storeName,
-      distance: storeObj.distance,
-      storeLogo: storeObj.storeLogo,
+      storeName,
+      distance,
+      storeLogo,
       level1,
       level2,
       level3,
       others
     };
-  }, [selectedStore, groupedStores]);
+  }, [selectedStore, allProducts, searchQuery]);
 
   // Render detailed view
   if (selectedStore && storeDetailData) {

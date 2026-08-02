@@ -34,9 +34,10 @@ router.post('/auth/login', async (req, res) => {
 
     // Search by email OR phone
     const userResult = await query(
-      `SELECT u.id_usuario, u.nombres, u.apellidos, u.email, u.telefono, u.password, r.tipo_rol, u.foto_perfil
+      `SELECT u.id_usuario, u.nombres, u.apellidos, u.email, u.telefono, u.password, r.tipo_rol, u.foto_perfil, ub.direccion
        FROM t_usuarios u
        JOIN t_roles r ON u.id_rol = r.id_rol
+       LEFT JOIN t_ubicaciones ub ON (ub.id_usuario = u.id_usuario AND ub.es_principal = true)
        WHERE u.email = $1 OR u.telefono = $1
        LIMIT 1`,
       [identifier.trim()]
@@ -78,6 +79,7 @@ router.post('/auth/login', async (req, res) => {
         apellidos: user.apellidos,
         email: user.email,
         telefono: user.telefono,
+        direccion: user.direccion || '',
         rol: user.tipo_rol,
         foto_perfil: user.foto_perfil,
       },
@@ -192,9 +194,10 @@ router.post('/auth/verify-otp', async (req, res) => {
     }
 
     const userResult = await query(
-      `SELECT u.id_usuario, u.nombres, u.apellidos, u.telefono, r.tipo_rol, u.foto_perfil
+      `SELECT u.id_usuario, u.nombres, u.apellidos, u.telefono, u.email, r.tipo_rol, u.foto_perfil, ub.direccion
        FROM t_usuarios u
        JOIN t_roles r ON u.id_rol = r.id_rol
+       LEFT JOIN t_ubicaciones ub ON (ub.id_usuario = u.id_usuario AND ub.es_principal = true)
        WHERE u.telefono = $1
        LIMIT 1`,
       [celular.trim()]
@@ -221,7 +224,9 @@ router.post('/auth/verify-otp', async (req, res) => {
         id: user.id_usuario,
         nombres: user.nombres,
         apellidos: user.apellidos,
+        email: user.email,
         telefono: user.telefono,
+        direccion: user.direccion || '',
         rol: user.tipo_rol,
         foto_perfil: user.foto_perfil,
       },

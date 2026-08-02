@@ -31,7 +31,6 @@ const getLocationCoords = (locationStr) => {
 function App() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
-  const [currentLocation, setCurrentLocation] = useState('📍 Calle 45 # 12-34, Bogotá');
   const [userPreferences, setUserPreferences] = useState([]);
   
   // Shopping Cart States
@@ -41,9 +40,33 @@ function App() {
     const saved = localStorage.getItem('sadya_user');
     return saved ? JSON.parse(saved) : null;
   });
+  const [currentLocation, setCurrentLocation] = useState(() => {
+    const savedUser = localStorage.getItem('sadya_user');
+    if (savedUser) {
+      try {
+        const parsed = JSON.parse(savedUser);
+        const dir = parsed?.direccion || parsed?.direccion_local || parsed?.direccion_residencia;
+        if (dir) return dir.startsWith('📍') ? dir : `📍 ${dir}`;
+      } catch (e) {}
+    }
+    const savedLoc = localStorage.getItem('sadya_location');
+    return savedLoc || '📍 Ingresa tu dirección';
+  });
+
   const [currentPage, setCurrentPage] = useState('home'); // 'home' or 'register'
   const [toast, setToast] = useState(null);
   const [selectedProductForModal, setSelectedProductForModal] = useState(null);
+
+  // Sync user location automatically on login/registration change
+  useEffect(() => {
+    if (user) {
+      const userDir = user.direccion || user.direccion_local || user.direccion_residencia;
+      if (userDir) {
+        const formatted = userDir.startsWith('📍') ? userDir : `📍 ${userDir}`;
+        setCurrentLocation(formatted);
+      }
+    }
+  }, [user]);
 
   // Add to cart handler
   const handleAddToCart = (product, quantity = 1) => {
@@ -76,17 +99,24 @@ function App() {
   };
 
   const handleRegisterSuccess = (userData, role, message) => {
+    const userDir = userData?.direccion || userData?.direccion_local || userData?.direccion_residencia || '';
     const loggedUser = {
       id: userData?.id || userData?.id_usuario,
       nombres: userData?.nombres || 'Usuario',
       apellidos: userData?.apellidos || '',
       email: userData?.email || '',
       telefono: userData?.telefono || '',
+      direccion: userDir,
       rol: role
     };
     setUser(loggedUser);
     localStorage.setItem('sadya_user', JSON.stringify(loggedUser));
     localStorage.removeItem('sadya_read_notifications');
+    if (userDir) {
+      const formatted = userDir.startsWith('📍') ? userDir : `📍 ${userDir}`;
+      setCurrentLocation(formatted);
+      localStorage.setItem('sadya_location', formatted);
+    }
     showToast(message);
     setCurrentPage('home');
   };
@@ -231,6 +261,12 @@ function App() {
             setUser(userData);
             localStorage.setItem('sadya_user', JSON.stringify(userData));
             localStorage.removeItem('sadya_read_notifications');
+            const userDir = userData?.direccion || userData?.direccion_local || userData?.direccion_residencia || '';
+            if (userDir) {
+              const formatted = userDir.startsWith('📍') ? userDir : `📍 ${userDir}`;
+              setCurrentLocation(formatted);
+              localStorage.setItem('sadya_location', formatted);
+            }
             showToast(message);
             setCurrentPage('home');
           }}

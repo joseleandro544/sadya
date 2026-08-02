@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { 
   Menu, MapPin, Search, Bell, User, ShoppingCart, X, Check,
   Home, Grid, ShoppingBag, Leaf, Handshake, HelpCircle, LogOut, ChevronDown, ChevronUp,
-  LogIn, UserPlus
+  LogIn, UserPlus, Settings
 } from 'lucide-react';
 import glowingStar from '../assets/categorias/Glowing star.svg';
 import redApple from '../assets/categorias/Red apple.svg';
@@ -36,10 +36,56 @@ export default function Navbar({
 }) {
   const [isCategoriesAccordionOpen, setIsCategoriesAccordionOpen] = useState(false);
   const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
-  const [hasNotifications, setHasNotifications] = useState(() => {
-    const read = localStorage.getItem('sadya_read_notifications');
-    return read !== 'true';
+
+  // Persistent notifications with tab system & unread badge logic
+  const [activeNotificationTab, setActiveNotificationTab] = useState('generales');
+  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+  const [notifications, setNotifications] = useState(() => {
+    const saved = localStorage.getItem('sadya_notifications');
+    if (saved) {
+      try { return JSON.parse(saved); } catch (e) {}
+    }
+    return [
+      {
+        id: 1,
+        title: '¡Bienvenido a SADYA!',
+        message: 'Rescata alimentos frescos en tu zona con precios especiales.',
+        time: 'Hace 5 min',
+        tab: 'generales',
+        read: false
+      },
+      {
+        id: 2,
+        title: 'Ofertas cerca de ti',
+        message: 'Nuevos excedentes publicados por tiendas asociadas.',
+        time: 'Hace 1 hora',
+        tab: 'generales',
+        read: false
+      },
+      {
+        id: 3,
+        title: 'Tienda Campesina',
+        message: 'Publicó bultos de verduras frescas listas para rescate.',
+        time: 'Hace 2 horas',
+        tab: 'tiendas',
+        read: false
+      }
+    ];
   });
+
+  const unreadCount = notifications.filter(n => !n.read).length;
+
+  const handleToggleNotifications = () => {
+    const next = !isNotificationsOpen;
+    setIsNotificationsOpen(next);
+    if (next && unreadCount > 0) {
+      const updated = notifications.map(n => ({ ...n, read: true }));
+      setNotifications(updated);
+      localStorage.setItem('sadya_notifications', JSON.stringify(updated));
+    }
+  };
+
+  const filteredNotifications = notifications.filter(n => n.tab === activeNotificationTab);
 
   const categoryItems = [
     { id: 'all', name: 'Todos', icon: glowingStar, bgColor: 'bg-slate-100 hover:bg-slate-200 text-slate-700' },
@@ -64,16 +110,11 @@ export default function Navbar({
     user.rol === 'Tendero'
   );
 
-  const locations = [
-    "📍 Calle 45 # 12-34, Bogotá",
-    "📍 Carrera 7 # 72-10, Bogotá",
-    "📍 Avenida 19 # 100-50, Bogotá",
-    "📍 Calle 100 # 15-22, Bogotá",
-    "📍 Cl. 10 #3-45, Chía"
-  ];
-
   const handleSaveLocation = (loc) => {
-    setCurrentLocation(loc);
+    if (!loc) return;
+    const formatted = loc.startsWith('📍') ? loc : `📍 ${loc}`;
+    setCurrentLocation(formatted);
+    localStorage.setItem('sadya_location', formatted);
     setIsLocationModalOpen(false);
   };
 
@@ -149,27 +190,101 @@ export default function Navbar({
                 <MapPin className="h-5 w-5" />
               </button>
 
-              {/* Notifications */}
-              <button 
-                onClick={() => {
-                  setHasNotifications(false);
-                  localStorage.setItem('sadya_read_notifications', 'true');
-                }}
-                className="group flex flex-col items-center justify-center text-slate-600 hover:text-blue-600 transition-colors duration-200"
-              >
-                <div className="relative p-1">
-                  <Bell className="h-5 w-5 transition-transform group-hover:scale-110" />
-                  {hasNotifications && (
-                    <span className="absolute top-0 right-0 flex h-2 w-2">
-                      <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-75"></span>
-                      <span className="relative inline-flex h-2 w-2 rounded-full bg-red-500"></span>
-                    </span>
-                  )}
-                </div>
-                <span className="text-[10px] font-medium mt-0.5 tracking-tight hidden md:block text-slate-500 group-hover:text-blue-600">
-                  Notificaciones
-                </span>
-              </button>
+              {/* Notifications Dropdown */}
+              <div className="relative">
+                <button 
+                  onClick={handleToggleNotifications}
+                  className="group flex flex-col items-center justify-center text-slate-600 hover:text-blue-600 transition-colors duration-200 cursor-pointer focus:outline-none"
+                >
+                  <div className="relative p-1">
+                    <Bell className="h-5 w-5 transition-transform group-hover:scale-110" />
+                    {unreadCount > 0 && (
+                      <span className="absolute top-0 right-0 flex h-2.5 w-2.5">
+                        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-75"></span>
+                        <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-red-500"></span>
+                      </span>
+                    )}
+                  </div>
+                  <span className="text-[10px] font-medium mt-0.5 tracking-tight hidden md:block text-slate-500 group-hover:text-blue-600">
+                    Notificaciones
+                  </span>
+                </button>
+
+                {/* Notification Popover Panel */}
+                {isNotificationsOpen && (
+                  <div className="absolute right-0 mt-3 w-80 sm:w-96 rounded-3xl bg-white p-4 shadow-2xl border border-slate-100 z-50 animate-slide-in">
+                    
+                    {/* Top Triangle Arrow */}
+                    <div className="absolute -top-1.5 right-4 w-3.5 h-3.5 bg-white border-t border-l border-slate-100 rotate-45" />
+
+                    {/* Popover Header */}
+                    <div className="flex items-center justify-between border-b border-slate-100 pb-3 px-1">
+                      <h3 className="text-base font-extrabold text-slate-900 tracking-tight">
+                        Notificaciones
+                      </h3>
+                      <button 
+                        onClick={() => alert("Configuración de notificaciones.")}
+                        className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-50 rounded-full transition-colors cursor-pointer"
+                        title="Configuración"
+                      >
+                        <Settings className="h-4 w-4" />
+                      </button>
+                    </div>
+
+                    {/* Tabs */}
+                    <div className="flex border-b border-slate-100 mt-2">
+                      <button
+                        onClick={() => setActiveNotificationTab('generales')}
+                        className={`flex-1 py-2.5 text-xs font-bold text-center border-b-2 transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                          activeNotificationTab === 'generales'
+                            ? 'border-blue-600 text-blue-600'
+                            : 'border-transparent text-slate-400 hover:text-slate-700'
+                        }`}
+                      >
+                        <span>Generales</span>
+                        <span className="text-sm">💬</span>
+                      </button>
+
+                      <button
+                        onClick={() => setActiveNotificationTab('tiendas')}
+                        className={`flex-1 py-2.5 text-xs font-bold text-center border-b-2 transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                          activeNotificationTab === 'tiendas'
+                            ? 'border-blue-600 text-blue-600'
+                            : 'border-transparent text-slate-400 hover:text-slate-700'
+                        }`}
+                      >
+                        <span>Tiendas que sigo</span>
+                        <span className="text-sm">📣</span>
+                      </button>
+                    </div>
+
+                    {/* Notification List Content */}
+                    <div className="mt-3 max-h-72 overflow-y-auto space-y-2 pr-1 custom-scrollbar">
+                      {filteredNotifications.length > 0 ? (
+                        filteredNotifications.map((n) => (
+                          <div 
+                            key={n.id} 
+                            className="p-3 rounded-2xl bg-slate-50 hover:bg-slate-100/80 transition-colors border border-slate-100/80 text-left"
+                          >
+                            <div className="flex items-center justify-between">
+                              <h4 className="text-xs font-extrabold text-slate-900">{n.title}</h4>
+                              <span className="text-[10px] text-slate-400 font-semibold">{n.time}</span>
+                            </div>
+                            <p className="text-[11px] text-slate-600 mt-1 leading-snug">{n.message}</p>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="text-center py-8 px-4 text-slate-400">
+                          <Bell className="h-8 w-8 mx-auto mb-2 text-slate-300 animate-pulse" />
+                          <p className="text-xs font-bold text-slate-700">Sin notificaciones</p>
+                          <p className="text-[10px] text-slate-400 mt-0.5">No hay mensajes en esta sección.</p>
+                        </div>
+                      )}
+                    </div>
+
+                  </div>
+                )}
+              </div>
 
               {/* My Account / Profile Dropdown */}
               <div className="relative">
@@ -641,7 +756,7 @@ export default function Navbar({
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <h3 className="text-lg font-bold text-slate-950 flex items-center gap-2">
                 <MapPin className="h-5 w-5 text-blue-600" />
-                Selecciona tu ubicación
+                Dirección de entrega
               </h3>
               <button 
                 onClick={() => setIsLocationModalOpen(false)}
@@ -651,46 +766,47 @@ export default function Navbar({
               </button>
             </div>
 
-            <div className="mt-4 space-y-2">
-              <p className="text-xs text-slate-500 mb-2">
+            <div className="mt-4 space-y-3">
+              <p className="text-xs text-slate-500">
                 Mostraremos ofertas y tiendas con base a la cercanía de tu dirección de entrega.
               </p>
-              {locations.map((loc) => (
-                <button
-                  key={loc}
-                  onClick={() => handleSaveLocation(loc)}
-                  className={`flex w-full items-center justify-between rounded-2xl border p-3.5 text-left text-sm transition-all duration-200 ${
-                    currentLocation === loc
-                      ? 'border-blue-600 bg-blue-50/50 text-blue-700 font-semibold'
-                      : 'border-slate-100 bg-slate-50 hover:bg-slate-100 hover:border-slate-200 text-slate-700'
-                  }`}
-                >
-                  <span className="truncate">{loc}</span>
-                  {currentLocation === loc && (
-                    <Check className="h-4 w-4 text-blue-600 shrink-0" />
-                  )}
-                </button>
-              ))}
+              
+              {/* Current Address Display Card */}
+              <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="h-9 w-9 rounded-xl bg-blue-100 border border-blue-200 flex items-center justify-center text-blue-600 shrink-0">
+                    <MapPin className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">Dirección actual</span>
+                    <span className="text-sm font-bold text-slate-900 block truncate max-w-[220px]">{currentLocation}</span>
+                  </div>
+                </div>
+                <Check className="h-5 w-5 text-green-600 shrink-0" />
+              </div>
             </div>
 
             {/* Custom Input */}
-            <div className="mt-4 pt-4 border-t border-slate-100">
-              <label className="text-xs font-semibold text-slate-500 block mb-1.5">O ingresa otra dirección:</label>
+            <div className="mt-5 pt-4 border-t border-slate-100">
+              <label className="text-xs font-bold text-slate-700 block mb-2">
+                {user ? 'Agregar o cambiar por otra dirección:' : 'Ingresa tu dirección de entrega:'}
+              </label>
               <div className="flex gap-2">
                 <input
                   type="text"
-                  placeholder="Ej: Calle 85 # 11-20"
+                  placeholder="Ej: Calle 85 # 11-20, Bogotá"
                   value={tempLocation.replace('📍 ', '')}
                   onChange={(e) => setTempLocation(e.target.value ? `📍 ${e.target.value}` : '')}
-                  className="flex-1 rounded-full border border-slate-200 px-4 py-2 text-sm outline-none focus:border-blue-500"
+                  className="flex-1 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm text-slate-800 outline-none transition-all focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-100/50"
                 />
                 <button
                   onClick={() => {
-                    if (tempLocation.trim()) {
-                      handleSaveLocation(tempLocation);
+                    const cleanVal = tempLocation.replace('📍 ', '').trim();
+                    if (cleanVal) {
+                      handleSaveLocation(cleanVal);
                     }
                   }}
-                  className="rounded-full bg-blue-600 text-white px-5 py-2 text-sm font-semibold hover:bg-blue-700 transition-colors shadow-md shadow-blue-100"
+                  className="rounded-2xl bg-blue-600 text-white px-5 py-2.5 text-xs font-extrabold hover:bg-blue-700 transition-colors shadow-md shadow-blue-100 cursor-pointer shrink-0"
                 >
                   Guardar
                 </button>
