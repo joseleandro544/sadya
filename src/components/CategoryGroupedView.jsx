@@ -1,4 +1,4 @@
-import { api } from '../api';
+import { apiFetch } from '../api';
 import { useState, useEffect, useMemo } from 'react';
 import ProductCard from './ProductCard';
 import { Heart, Loader2, ArrowLeft, Store } from 'lucide-react';
@@ -24,7 +24,7 @@ export default function CategoryGroupedView({
     const fetchCatalog = async () => {
       setLoading(true);
       try {
-        const res = await fetch(api(`/api/products/catalog?lat=${lat}&lng=${lng}&role=${viewerRole}`));
+        const res = await apiFetch(`/api/products/catalog?lat=${lat}&lng=${lng}&role=${viewerRole}`);
         const result = await res.json();
         if (res.ok && result.status === 'ok') {
           setDbProducts(result.data);

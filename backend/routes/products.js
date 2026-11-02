@@ -4,6 +4,7 @@
 
 import { Router } from 'express';
 import { query } from '../db.js';
+import { requireAuth, requireSelf } from '../middleware/auth.js';
 
 const router = Router();
 
@@ -119,7 +120,7 @@ router.get('/products/catalog', async (req, res) => {
 
 // ── GET /api/products/seller/:userId ────────────────────
 // Obtiene todos los productos de un vendedor (campesino o tienda)
-router.get('/products/seller/:userId', async (req, res) => {
+router.get('/products/seller/:userId', requireAuth, requireSelf, async (req, res) => {
   try {
     const { userId } = req.params;
     const result = await query(
@@ -139,10 +140,11 @@ router.get('/products/seller/:userId', async (req, res) => {
 
 // ── POST /api/products ──────────────────────────────────
 // Publica un nuevo producto en el catálogo real (Solo Campesino y Tendero)
-router.post('/products', async (req, res) => {
+router.post('/products', requireAuth, async (req, res) => {
   try {
+    // El vendedor es siempre el usuario de la sesión, no el que venga en el cuerpo
+    const id_usuario = req.userId;
     const {
-      id_usuario,
       nombre_producto,
       costo_original,
       costo_con_descuento,
@@ -234,9 +236,10 @@ router.post('/products', async (req, res) => {
 
 // ── POST /api/products/donate ───────────────────────────
 // Registra una donación en t_donaciones y marca el producto como Donado
-router.post('/products/donate', async (req, res) => {
+router.post('/products/donate', requireAuth, async (req, res) => {
   try {
-    const { id_producto, id_usuario, cantidad } = req.body;
+    const { id_producto, cantidad } = req.body;
+    const id_usuario = req.userId;
 
     if (!id_producto || !id_usuario || !cantidad) {
       return res.status(400).json({ status: 'error', message: 'ID del producto, ID de usuario y cantidad son obligatorios.' });
@@ -290,9 +293,10 @@ router.post('/products/donate', async (req, res) => {
 
 // ── POST /api/products/discard ──────────────────────────
 // Descarta un producto vencido (lo marca como Agotado y stock a 0)
-router.post('/products/discard', async (req, res) => {
+router.post('/products/discard', requireAuth, async (req, res) => {
   try {
-    const { id_producto, id_usuario } = req.body;
+    const { id_producto } = req.body;
+    const id_usuario = req.userId;
 
     if (!id_producto || !id_usuario) {
       return res.status(400).json({ status: 'error', message: 'ID del producto y de usuario son obligatorios.' });

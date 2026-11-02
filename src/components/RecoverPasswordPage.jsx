@@ -1,4 +1,4 @@
-import { api } from '../api';
+import { apiFetch } from '../api';
 import React, { useState, useRef } from 'react';
 import { Mail, Key, ShieldCheck, ShieldAlert, ArrowLeft, Eye, EyeOff } from 'lucide-react';
 
@@ -46,7 +46,7 @@ export default function RecoverPasswordPage({ onBack, onBackToLogin }) {
     setError('');
     setLoading(true);
     try {
-      const res = await fetch(api('/api/auth/forgot-password'), {
+      const res = await apiFetch('/api/auth/forgot-password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: email.trim().toLowerCase() }),
@@ -92,7 +92,7 @@ export default function RecoverPasswordPage({ onBack, onBackToLogin }) {
     setError('');
     setLoading(true);
     try {
-      const res = await fetch(api('/api/auth/reset-password'), {
+      const res = await apiFetch('/api/auth/reset-password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { clearSession } from './api';
 import Navbar from './components/Navbar';
 import RegisterPage from './components/RegisterPage';
 import FarmerRegisterPage from './components/FarmerRegisterPage';
@@ -38,6 +39,11 @@ function App() {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [user, setUser] = useState(() => {
     const saved = localStorage.getItem('sadya_user');
+    // Sin token de sesión (sesiones anteriores a esta versión) se pide iniciar sesión de nuevo
+    if (saved && !localStorage.getItem('sadya_token')) {
+      localStorage.removeItem('sadya_user');
+      return null;
+    }
     return saved ? JSON.parse(saved) : null;
   });
   const [currentLocation, setCurrentLocation] = useState(() => {
@@ -382,6 +388,7 @@ function App() {
         onLogout={() => {
           setUser(null);
           localStorage.removeItem('sadya_user');
+          clearSession();
           localStorage.removeItem('sadya_read_notifications');
           showToast('Sesión cerrada con éxito');
           setCurrentPage('home');

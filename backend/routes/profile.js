@@ -4,12 +4,13 @@
 
 import { Router } from 'express';
 import { query } from '../db.js';
+import { requireAuth, requireSelf } from '../middleware/auth.js';
 
 const router = Router();
 
 // ── GET /api/profile/:userId ────────────────────────────
 // Obtiene el perfil completo de un usuario
-router.get('/profile/:userId', async (req, res) => {
+router.get('/profile/:userId', requireAuth, requireSelf, async (req, res) => {
   try {
     const { userId } = req.params;
 
@@ -137,7 +138,7 @@ router.get('/profile/:userId', async (req, res) => {
 
 // ── PUT /api/profile/:userId ────────────────────────────
 // Actualiza el perfil de un usuario
-router.put('/profile/:userId', async (req, res) => {
+router.put('/profile/:userId', requireAuth, requireSelf, async (req, res) => {
   try {
     const { userId } = req.params;
     const {

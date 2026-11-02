@@ -1,4 +1,4 @@
-import { api } from '../api';
+import { apiFetch } from '../api';
 import { useState, useRef, useEffect } from 'react';
 import { ArrowLeft, Eye, EyeOff, MapPin, Building2, User, Mail, Lock, CheckCircle, ChevronDown, Search } from 'lucide-react';
 
@@ -107,7 +107,7 @@ export default function MerchantRegisterPage({ onBack, onRegisterSuccess }) {
 
     setLoading(true);
     try {
-      const res = await fetch(api('/api/register/merchant'), {
+      const res = await apiFetch('/api/register/merchant', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

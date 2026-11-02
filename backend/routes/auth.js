@@ -129,7 +129,7 @@ router.post('/auth/login-code', async (req, res) => {
 
     // Generate random 6-digit OTP
     const generatedOtp = Math.floor(100000 + Math.random() * 900000).toString();
-    otpStore.set(celular.trim(), generatedOtp);
+    otpStore.set(celular.trim(), { code: generatedOtp, expires: Date.now() + 5 * 60 * 1000, attempts: 0 });
 
     let smsSent = false;
     try {
@@ -146,7 +146,7 @@ router.post('/auth/login-code', async (req, res) => {
       message: smsSent 
         ? 'Código de verificación enviado por Mensaje de Texto (SMS).' 
         : 'Código de verificación generado (Simulación).',
-      debugCode: (process.env.NODE_ENV === 'development' || !smsSent) ? generatedOtp : undefined,
+      debugCode: (process.env.NODE_ENV === 'development') ? generatedOtp : undefined,
       data: {
         id: user.id_usuario,
         nombres: user.nombres,
@@ -186,7 +186,12 @@ router.post('/auth/verify-otp', async (req, res) => {
 
     // Verify code matching
     const storedOtp = otpStore.get(celular.trim());
-    if (!storedOtp || storedOtp !== otp) {
+    if (storedOtp && (Date.now() > storedOtp.expires || storedOtp.attempts >= 5)) {
+      otpStore.delete(celular.trim());
+    }
+    const validOtp = otpStore.get(celular.trim());
+    if (!validOtp || validOtp.code !== otp) {
+      if (validOtp) validOtp.attempts += 1;
       return res.status(400).json({
         status: 'error',
         message: 'El código de verificación ingresado es incorrecto o expiró.',
@@ -271,7 +276,7 @@ router.post('/auth/forgot-password', async (req, res) => {
 
     // Generate random 6-digit recovery token
     const resetToken = Math.floor(100000 + Math.random() * 900000).toString();
-    forgotPasswordStore.set(email.trim().toLowerCase(), resetToken);
+    forgotPasswordStore.set(email.trim().toLowerCase(), { code: resetToken, expires: Date.now() + 15 * 60 * 1000, attempts: 0 });
 
     let emailSent = false;
     try {
@@ -302,7 +307,7 @@ router.post('/auth/forgot-password', async (req, res) => {
       message: emailSent
         ? 'Se ha enviado un correo con tu código de recuperación de contraseña.'
         : 'Código de recuperación generado en consola (Simulación).',
-      debugCode: (process.env.NODE_ENV === 'development' || !emailSent) ? resetToken : undefined,
+      debugCode: (process.env.NODE_ENV === 'development') ? resetToken : undefined,
     });
 
   } catch (err) {
@@ -335,8 +340,14 @@ router.post('/auth/reset-password', async (req, res) => {
       });
     }
 
-    const storedCode = forgotPasswordStore.get(email.trim().toLowerCase());
-    if (!storedCode || storedCode !== code.trim()) {
+    const resetKey = email.trim().toLowerCase();
+    const storedCode = forgotPasswordStore.get(resetKey);
+    if (storedCode && (Date.now() > storedCode.expires || storedCode.attempts >= 5)) {
+      forgotPasswordStore.delete(resetKey);
+    }
+    const validCode = forgotPasswordStore.get(resetKey);
+    if (!validCode || validCode.code !== code.trim()) {
+      if (validCode) validCode.attempts += 1;
       return res.status(400).json({
         status: 'error',
         message: 'El código de seguridad ingresado es incorrecto o ha expirado.',
@@ -420,50 +431,26 @@ router.post('/auth/social', async (req, res) => {
       });
     }
 
-    // 2. If email exists in DB, link account to this social login
+    // 2. Si el correo ya existe, NO se vincula automáticamente.
+    //    El login social de la web todavía es simulado (no verifica con Google/Apple),
+    //    así que vincular por correo permitiría entrar a cuentas ajenas.
     if (email) {
       const emailResult = await query(
         `SELECT id_usuario FROM t_usuarios WHERE email = $1 LIMIT 1`,
         [email.trim().toLowerCase()]
       );
       if (emailResult.rows.length > 0) {
-        const userId = emailResult.rows[0].id_usuario;
-        await query(
-          `UPDATE t_usuarios 
-           SET id_social = $1, metodo_registro = $2 
-           WHERE id_usuario = $3`,
-          [idSocial, metodoRegistro, userId]
-        );
-
-        // Fetch updated user details
-        userResult = await query(
-          `SELECT u.id_usuario, u.nombres, u.apellidos, u.email, u.telefono, r.tipo_rol, u.foto_perfil
-           FROM t_usuarios u
-           JOIN t_roles r ON u.id_rol = r.id_rol
-           WHERE u.id_usuario = $1
-           LIMIT 1`,
-          [userId]
-        );
-        const user = userResult.rows[0];
-        console.log(`✅ Cuenta vinculada y login social exitoso (${metodoRegistro}): ${user.nombres}`);
-        return res.status(200).json({
-          status: 'ok',
-          message: `Hemos vinculado tu cuenta de ${metodoRegistro} con éxito.`,
-          data: {
-            id: user.id_usuario,
-            nombres: user.nombres,
-            apellidos: user.apellidos,
-            email: user.email,
-            telefono: user.telefono,
-            rol: user.tipo_rol,
-            foto_perfil: user.foto_perfil,
-          },
+        return res.status(409).json({
+          status: 'error',
+          message: 'Ya existe una cuenta con este correo. Inicia sesión con tu correo y contraseña.',
         });
       }
     }
 
     // 3. Register as new user via social credentials
-    const roleName = rol || 'Cliente';
+    // Nunca se permite crear administradores desde el registro público
+    const allowedSocialRoles = ['Cliente', 'Campesino', 'Productor', 'Tienda', 'Tendero', 'Domiciliario', 'Fundación'];
+    const roleName = allowedSocialRoles.includes(rol) ? rol : 'Cliente';
     const roleResult = await query(`SELECT id_rol FROM t_roles WHERE tipo_rol = $1 LIMIT 1`, [roleName]);
     const id_rol = roleResult.rows.length > 0 ? roleResult.rows[0].id_rol : 3; // Defaults to Cliente
 

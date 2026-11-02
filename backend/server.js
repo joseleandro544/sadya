@@ -14,6 +14,7 @@ import registerRoutes from './routes/register.js';
 import authRoutes from './routes/auth.js';
 import productRoutes from './routes/products.js';
 import profileRoutes from './routes/profile.js';
+import { attachTokenOnSuccess } from './middleware/auth.js';
 
 // ── Inicializar Express ─────────────────────────────────
 const app = express();
@@ -22,7 +23,7 @@ const PORT = process.env.PORT || 3001;
 // ── Middlewares Globales ────────────────────────────────
 // Orígenes permitidos: en producción se leen de CORS_ORIGINS (separados por coma)
 const allowedOrigins = process.env.NODE_ENV === 'production'
-  ? (process.env.CORS_ORIGINS || 'https://sadya.co,https://www.sadya.co').split(',').map((o) => o.trim())
+  ? (process.env.CORS_ORIGINS || 'https://sadya.co,https://www.sadya.co,https://lightslategray-dove-282993.hostingersite.com').split(',').map((o) => o.trim())
   : ['http://localhost:5185'];
 
 app.use(cors({
@@ -32,6 +33,10 @@ app.use(cors({
 
 app.use(express.json({ limit: '10mb' }));                 // Parsear body JSON en peticiones POST/PUT (aumentado para base64)
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
+
+// ── Sesión: login y registro devuelven un token JWT ────
+// (no se aplica a /auth/login-code: ese paso aún no verifica al usuario)
+app.use(['/api/auth/login', '/api/auth/verify-otp', '/api/auth/social', '/api/register'], attachTokenOnSuccess);
 
 // ── Registrar Rutas ─────────────────────────────────────
 app.use('/api', healthRoutes);           // GET /api/health

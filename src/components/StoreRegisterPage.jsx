@@ -1,4 +1,4 @@
-import { api } from '../api';
+import { apiFetch } from '../api';
 import { ArrowLeft, Eye, EyeOff, Lock, Mail, Phone, User, Building2, ShieldAlert, CheckCircle, MapPin } from 'lucide-react';
 
 const CITIES = [
@@ -80,7 +80,7 @@ export default function StoreRegisterPage({ onBack, onRegisterSuccess, onOpenLog
 
     setLoading(true);
     try {
-      const res = await fetch(api('/api/register/store'), {
+      const res = await apiFetch('/api/register/store', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
