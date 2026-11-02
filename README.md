@@ -8,13 +8,13 @@ Plataforma web de la fundación SADYA para prevenir la pérdida de alimentos: co
 | --- | --- |
 | `src/` | Frontend en React 19 + Vite + Tailwind |
 | `backend/` | API en Node.js (Express 5) + PostgreSQL |
-| `database/` | Scripts SQL de creación y datos de prueba, y el diagrama entidad-relación (pgAdmin) |
+| `database/` | `Creacion DB.sql` crea todas las tablas y los catálogos (roles y estados). `Insercion y prubas de la BD.sql` es un script antiguo de pruebas y no coincide con el esquema actual. `EDR SADYA.pgerd` es el diagrama de pgAdmin |
 
 ## Cómo correrlo en local
 
 Necesitas Node.js 20 o superior y PostgreSQL.
 
-1. Crea la base de datos con `database/Creacion DB.sql`.
+1. Crea una base de datos vacía y ejecuta `database/Creacion DB.sql` (sirve igual en Neon, desde su SQL Editor).
 2. Backend:
    ```bash
    cd backend

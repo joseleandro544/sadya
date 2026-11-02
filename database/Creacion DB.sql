@@ -1,6 +1,8 @@
 -- ============================================================================
 -- PROYECTO SADYA (Seguridad Alimentaria con Dios y Amor)
 -- SCRIPT DE CREACIÓN DE BASE DE DATOS - POSTGRESQL
+-- Versión alineada con el backend (noviembre 2026). Ejecutar en una base vacía
+-- (por ejemplo en el SQL Editor de Neon). Incluye los catálogos de roles y estados.
 -- ============================================================================
 
 -- ----------------------------------------------------------------------------
@@ -19,13 +21,14 @@ CREATE TABLE t_usuarios (
 	apellidos VARCHAR(150),
 	email VARCHAR(100) UNIQUE,
 	password VARCHAR(255),
-	d_social VARCHAR(255), -- El ID secreto qeu manda Google/Apple
+	id_social VARCHAR(255), -- El ID que manda Google/Apple
 	telefono VARCHAR(20),
 	metodo_registro VARCHAR(50) DEFAULT 'Local', -- Ej: Google, Apple, Celular
 	numero_identidad VARCHAR(50),
 	fecha_nacimiento DATE,
 	genero VARCHAR(20),
 	fecha_registro TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+	fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 	-- Campos de Seguridad y Notificaciones
 	foto_perfil TEXT,
 	fcm_token VARCHAR(255), -- Para Notificaciones Push
@@ -104,7 +107,7 @@ CREATE TABLE t_productos (
 	fecha_vencimiento DATE NOT NULL,
 	fecha_fin_promocion TIMESTAMP, -- Control temporal de rebajas y alertas
 	descripcion TEXT,
-	imagen_url VARCHAR(500),
+	imagen_url TEXT, -- URL o imagen en base64 (temporal)
 	fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -269,7 +272,7 @@ BEGIN
 	WHERE id_estado = OLD.id_estado;
 
 	-- Si el producto ya paso a la historia, cancelamos la actualizacion
-	IF estado_actual IN ('Vencido', 'Donado', 'Vendido') THEN
+	IF estado_actual IN ('Vencido', 'Donado', 'Vendido', 'Descartado') THEN
 		RAISE EXCEPTION 'Seguridad DB: Operación denegada. Este producto ya es un 
 		dato historico (%) y no puede ser alterado.', estado_actual;
 	END IF;
@@ -283,3 +286,31 @@ CREATE TRIGGER trg_proteger_historico
 BEFORE UPDATE ON t_productos
 FOR EACH ROW
 EXECUTE FUNCTION bloquear_edicion_historico();
+
+-- ============================================================================
+-- CATÁLOGOS INICIALES (los ID son los que usa el backend)
+-- ============================================================================
+
+-- Roles: el backend los busca por nombre. 'Cliente' debe ser el id 3
+-- porque es el valor por defecto del registro con Google/Apple.
+INSERT INTO t_roles (id_rol, tipo_rol) VALUES
+	(1, 'Campesino'),
+	(2, 'Tienda'),
+	(3, 'Cliente'),
+	(4, 'Domiciliario'),
+	(5, 'Fundación'),
+	(6, 'Administrador'),
+	(7, 'Transportador');
+SELECT setval('t_roles_id_rol_seq', (SELECT MAX(id_rol) FROM t_roles));
+
+-- Estados de producto: el backend usa estos ID directamente.
+-- 1, 4 y 6 aparecen en el catálogo; 3 = donado; 5 = descartado.
+INSERT INTO t_estados_producto (id_estado, nombre_estado) VALUES
+	(1, 'Inventario'),
+	(2, 'Vendido'),
+	(3, 'Donado'),
+	(4, 'En promoción'),
+	(5, 'Descartado'),
+	(6, 'Próximo a vencer'),
+	(7, 'Vencido');
+SELECT setval('t_estados_producto_id_estado_seq', (SELECT MAX(id_estado) FROM t_estados_producto));
