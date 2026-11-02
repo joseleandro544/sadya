@@ -9,10 +9,10 @@ import { query } from '../db.js';
 const router = Router();
 
 // ── POST /api/register/farmer ───────────────────────────
-// Registra un Campesino/Productor (sin correo ni contraseña)
+// Registra un Campesino/Productor con PIN de 4 números
 router.post('/register/farmer', async (req, res) => {
   try {
-    const { nombreCompleto, direccion, telefono } = req.body;
+    const { nombreCompleto, direccion, telefono, pin, password } = req.body;
 
     // ── Validaciones ──
     if (!nombreCompleto || nombreCompleto.trim() === '') {
@@ -25,6 +25,14 @@ router.post('/register/farmer', async (req, res) => {
       return res.status(400).json({
         status: 'error',
         message: 'El teléfono es obligatorio.',
+      });
+    }
+
+    const clave = pin || password;
+    if (!clave || !/^\d{4}$/.test(String(clave).trim())) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'Debes ingresar una clave (PIN de 4 números).',
       });
     }
 
@@ -71,12 +79,15 @@ router.post('/register/farmer', async (req, res) => {
       apellidos = partes.slice(2).join(' ');
     }
 
+    // ── Encriptar el PIN (Clave) con bcrypt ──
+    const hashedPassword = await bcrypt.hash(String(clave).trim(), 10);
+
     // ── Insertar usuario ──
     const userResult = await query(
-      `INSERT INTO t_usuarios (id_rol, nombres, apellidos, telefono, metodo_registro)
-       VALUES ($1, $2, $3, $4, 'Local')
+      `INSERT INTO t_usuarios (id_rol, nombres, apellidos, telefono, password, metodo_registro)
+       VALUES ($1, $2, $3, $4, $5, 'Local')
        RETURNING id_usuario, nombres, apellidos, telefono, fecha_registro`,
-      [idRol, nombres, apellidos, telefono.trim()]
+      [idRol, nombres, apellidos, telefono.trim(), hashedPassword]
     );
 
     const newUser = userResult.rows[0];

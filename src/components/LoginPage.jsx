@@ -78,7 +78,7 @@ export default function LoginPage({ onBack, onOpenRegister, onLoginSuccess, onOp
       return;
     }
     if (!password.trim()) {
-      setError('Por favor ingresa tu contraseña.');
+      setError('Por favor ingresa tu contraseña o PIN de 4 números.');
       return;
     }
     setError('');
@@ -242,7 +242,7 @@ export default function LoginPage({ onBack, onOpenRegister, onLoginSuccess, onOp
               <input
                 type="text"
                 id="identifier"
-                placeholder="ej. juan@correo.com o 320123..."
+                placeholder="ej. 3101234567 o juan@correo.com"
                 value={identifier}
                 onChange={(e) => setIdentifier(e.target.value)}
                 className="w-full rounded-xl border border-slate-200 bg-slate-50/50 py-3 px-4 text-sm text-slate-800 placeholder-slate-400 outline-none transition-all duration-300 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-100/50"
@@ -253,7 +253,7 @@ export default function LoginPage({ onBack, onOpenRegister, onLoginSuccess, onOp
             <div>
               <div className="flex justify-between items-center mb-2">
                 <label htmlFor="password" className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
-                  Contraseña
+                  Contraseña o PIN (4 dígitos)
                 </label>
                 <a
                   href="#"
@@ -270,7 +270,7 @@ export default function LoginPage({ onBack, onOpenRegister, onLoginSuccess, onOp
                 <input
                   type={showPassword ? 'text' : 'password'}
                   id="password"
-                  placeholder="Ingresa tu contraseña"
+                  placeholder="Ingresa tu contraseña o PIN de 4 números"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="w-full rounded-xl border border-slate-200 bg-slate-50/50 py-3 pl-4 pr-11 text-sm text-slate-800 placeholder-slate-400 outline-none transition-all duration-300 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-100/50"
@@ -282,6 +282,12 @@ export default function LoginPage({ onBack, onOpenRegister, onLoginSuccess, onOp
                 >
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
+              </div>
+              <div className="mt-2 p-2.5 rounded-xl bg-amber-50/80 border border-amber-100/80 text-[11px] text-amber-800 flex items-start gap-1.5 leading-snug">
+                <span className="shrink-0 text-xs">🌾</span>
+                <span>
+                  <strong>Campesinos / Productores:</strong> Ingresa tu número de celular registrado y tu <strong>PIN de 4 números</strong> como clave.
+                </span>
               </div>
             </div>
 

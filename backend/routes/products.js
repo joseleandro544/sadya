@@ -31,7 +31,17 @@ router.get('/products/catalog', async (req, res) => {
               p.imagen_url as image,
               COALESCE(t.nombre_establecimiento, u.nombres || \' \' || COALESCE(u.apellidos, \'\')) AS store,
               COALESCE(
-                ST_DistanceSphere(ubi.coordenadas::geometry, ST_SetSRID(ST_MakePoint($1, $2), 4326)) / 1000.0,
+                CASE 
+                  WHEN ubi.latitud IS NOT NULL AND ubi.longitud IS NOT NULL THEN
+                    (6371.0 * acos(
+                      LEAST(1.0, GREATEST(-1.0,
+                        cos(radians($2)) * cos(radians(ubi.latitud)) *
+                        cos(radians(ubi.longitud) - radians($1)) +
+                        sin(radians($2)) * sin(radians(ubi.latitud))
+                      ))
+                    ))
+                  ELSE NULL 
+                END,
                 (1.5 + (p.id_usuario % 10) * 0.4)
               ) AS distance,
               EXTRACT(DAY FROM (p.fecha_vencimiento::timestamp - CURRENT_TIMESTAMP)) AS dias_para_vencer,
@@ -128,7 +138,7 @@ router.get('/products/seller/:userId', async (req, res) => {
 });
 
 // ── POST /api/products ──────────────────────────────────
-// Publica un nuevo producto en el catálogo real
+// Publica un nuevo producto en el catálogo real (Solo Campesino y Tendero)
 router.post('/products', async (req, res) => {
   try {
     const {
@@ -138,6 +148,7 @@ router.post('/products', async (req, res) => {
       costo_con_descuento,
       cantidad_disponible,
       fecha_vencimiento,
+      fecha_fin_promocion,
       categoria,
       descripcion,
       imagen_url
@@ -147,6 +158,29 @@ router.post('/products', async (req, res) => {
     if (!id_usuario) {
       return res.status(400).json({ status: 'error', message: 'El id_usuario es obligatorio.' });
     }
+
+    // ── Verificación de rol en la Base de Datos ──
+    const userRoleRes = await query(
+      `SELECT r.tipo_rol 
+       FROM t_usuarios u 
+       JOIN t_roles r ON u.id_rol = r.id_rol 
+       WHERE u.id_usuario = $1`,
+      [id_usuario]
+    );
+
+    if (userRoleRes.rows.length === 0) {
+      return res.status(404).json({ status: 'error', message: 'Usuario no encontrado en el sistema.' });
+    }
+
+    const userRole = userRoleRes.rows[0].tipo_rol;
+    const allowedRoles = ['Campesino', 'Productor', 'Tendero', 'Tienda'];
+    if (!allowedRoles.includes(userRole)) {
+      return res.status(403).json({
+        status: 'error',
+        message: 'Acceso denegado: Únicamente los perfiles de Campesino/Productor y Tendero pueden registrar productos.'
+      });
+    }
+
     if (!nombre_producto || nombre_producto.trim() === '') {
       return res.status(400).json({ status: 'error', message: 'El nombre del producto es obligatorio.' });
     }
@@ -166,11 +200,15 @@ router.post('/products', async (req, res) => {
     // Por defecto, se crea en estado 'Inventario' (id_estado = 1) para que aparezca en el catálogo
     const id_estado = 1;
 
+    // Fecha fin de promoción automática: misma fecha de vencimiento a las 00:00:00
+    const final_fecha_fin_promocion = fecha_fin_promocion 
+      || (fecha_vencimiento ? `${String(fecha_vencimiento).substring(0, 10)} 00:00:00` : null);
+
     const result = await query(
       `INSERT INTO t_productos (
          id_usuario, id_estado, nombre_producto, costo_original, costo_con_descuento, 
-         cantidad_disponible, fecha_vencimiento, categoria, descripcion, imagen_url, fecha_creacion
-       ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW())
+         cantidad_disponible, fecha_vencimiento, fecha_fin_promocion, categoria, descripcion, imagen_url, fecha_creacion
+       ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NOW())
        RETURNING *`,
       [
         id_usuario,
@@ -180,6 +218,7 @@ router.post('/products', async (req, res) => {
         costo_con_descuento || null,
         cantidad_disponible,
         fecha_vencimiento,
+        final_fecha_fin_promocion,
         categoria.trim(),
         descripcion?.trim() || null,
         imagen_url?.trim() || null

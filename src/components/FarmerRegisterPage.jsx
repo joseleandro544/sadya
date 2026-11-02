@@ -1,16 +1,20 @@
 import { useState } from 'react';
-import { ArrowLeft, MapPin, User, Phone, CheckCircle } from 'lucide-react';
+import { ArrowLeft, MapPin, User, Phone, CheckCircle, Lock, Eye, EyeOff } from 'lucide-react';
 
-export default function FarmerRegisterPage({ onBack, onRegisterSuccess }) {
+export default function FarmerRegisterPage({ onBack, onRegisterSuccess, onOpenLogin }) {
   const [form, setForm] = useState({
     nombreCompleto: '',
     direccion: '',
-    telefono: ''
+    telefono: '',
+    pin: ''
   });
   
+  const [showPin, setShowPin] = useState(false);
+
   const [errors, setErrors] = useState({
     nombreCompleto: false,
     telefono: '',
+    pin: '',
     terms: ''
   });
 
@@ -20,7 +24,10 @@ export default function FarmerRegisterPage({ onBack, onRegisterSuccess }) {
   const [apiError, setApiError] = useState('');
 
   const handleChange = (field) => (e) => {
-    const value = e.target.value;
+    let value = e.target.value;
+    if (field === 'pin') {
+      value = value.replace(/\D/g, '').slice(0, 4);
+    }
     setForm((prev) => ({ ...prev, [field]: value }));
     setErrors((prev) => ({ ...prev, [field]: '' }));
     
@@ -34,7 +41,7 @@ export default function FarmerRegisterPage({ onBack, onRegisterSuccess }) {
     setApiError('');
 
     let hasError = false;
-    const newErrors = { nombreCompleto: false, telefono: '', terms: '' };
+    const newErrors = { nombreCompleto: false, telefono: '', pin: '', terms: '' };
 
     if (form.nombreCompleto.trim() === '') {
       newErrors.nombreCompleto = true;
@@ -42,6 +49,10 @@ export default function FarmerRegisterPage({ onBack, onRegisterSuccess }) {
     }
     if (form.telefono.trim() === '') {
       newErrors.telefono = 'El teléfono es obligatorio.';
+      hasError = true;
+    }
+    if (!form.pin || form.pin.length !== 4) {
+      newErrors.pin = 'La clave debe ser un PIN de 4 números.';
       hasError = true;
     }
     if (!acceptTerms) {
@@ -62,6 +73,7 @@ export default function FarmerRegisterPage({ onBack, onRegisterSuccess }) {
           nombreCompleto: form.nombreCompleto.trim(),
           direccion: form.direccion.trim(),
           telefono: form.telefono.trim(),
+          pin: form.pin.trim()
         }),
       });
 
@@ -120,7 +132,7 @@ export default function FarmerRegisterPage({ onBack, onRegisterSuccess }) {
         <div className="flex items-center gap-2">
           <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-600 text-white font-black text-xs shadow">S</div>
           <span className="font-extrabold text-slate-900 text-sm">
-            SADYA · <span className="text-amber-500">Únete Campesino / Productor</span>
+            SADYA · <span className="text-amber-500">Registro de usuario</span>
           </span>
         </div>
       </div>
@@ -132,14 +144,14 @@ export default function FarmerRegisterPage({ onBack, onRegisterSuccess }) {
           {/* Header Card */}
           <div className="mb-6 text-center sm:text-left">
             <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
-              Únete campesino / productor
+              Registro de usuario
             </h1>
             <p className="mt-2 text-sm text-slate-500">
               ¿Ya tienes una cuenta?{' '}
               <button
                 type="button"
-                onClick={() => alert('Inicio de sesión próximamente')}
-                className="text-blue-600 font-bold hover:underline"
+                onClick={onOpenLogin}
+                className="text-blue-600 font-bold hover:underline cursor-pointer"
               >
                 Haz clic aquí
               </button>
@@ -213,6 +225,51 @@ export default function FarmerRegisterPage({ onBack, onRegisterSuccess }) {
               {errors.telefono && (
                 <span className="text-[10px] font-bold text-red-500 tracking-wide mt-0.5 block">
                   {errors.telefono}
+                </span>
+              )}
+            </div>
+
+            {/* Clave / PIN de 4 números */}
+            <div className="flex flex-col gap-1.5">
+              <div className="flex justify-between items-center">
+                <label htmlFor="pin" className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+                  Clave (PIN de 4 números)
+                </label>
+                <span className={`text-[11px] font-bold ${form.pin.length === 4 ? 'text-emerald-600' : 'text-slate-400'}`}>
+                  {form.pin.length}/4 números
+                </span>
+              </div>
+              <div className="relative">
+                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
+                <input
+                  id="pin"
+                  type={showPin ? 'text' : 'password'}
+                  inputMode="numeric"
+                  maxLength={4}
+                  required
+                  placeholder="Ej: 1234"
+                  value={form.pin}
+                  onChange={handleChange('pin')}
+                  className={`h-12 w-full rounded-xl border bg-white pl-11 pr-12 text-base text-slate-800 tracking-widest placeholder-slate-400 placeholder:tracking-normal outline-none transition-all focus:ring-4 focus:ring-blue-100/60 font-mono ${
+                    errors.pin ? 'border-red-500 focus:border-red-500 focus:ring-red-100/50' : 'border-slate-200 focus:border-blue-500'
+                  }`}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPin(!showPin)}
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 focus:outline-none cursor-pointer p-1 transition-colors"
+                  title={showPin ? 'Ocultar PIN' : 'Ver PIN'}
+                >
+                  {showPin ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
+              {errors.pin ? (
+                <span className="text-[10px] font-bold text-red-500 tracking-wide mt-0.5 block">
+                  {errors.pin}
+                </span>
+              ) : (
+                <span className="text-[11px] text-slate-400 mt-0.5 block">
+                  Crea un PIN de 4 números. Lo usarás como clave para entrar a tu cuenta.
                 </span>
               )}
             </div>

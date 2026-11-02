@@ -12,7 +12,7 @@ const CITIES = [
   "Santa Marta"
 ];
 
-export default function FoundationRegisterPage({ onBack, onRegisterSuccess }) {
+export default function FoundationRegisterPage({ onBack, onRegisterSuccess, onOpenLogin }) {
   const [form, setForm] = useState({
     nombres: '',
     apellidos: '',
@@ -175,8 +175,8 @@ export default function FoundationRegisterPage({ onBack, onRegisterSuccess }) {
               ¿Ya tienes una cuenta?{' '}
               <button
                 type="button"
-                onClick={() => alert('Inicio de sesión próximamente')}
-                className="text-blue-600 font-bold hover:underline"
+                onClick={onOpenLogin}
+                className="text-blue-600 font-bold hover:underline cursor-pointer"
               >
                 Haz clic aquí
               </button>

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Navbar from './components/Navbar';
 import RegisterPage from './components/RegisterPage';
 import FarmerRegisterPage from './components/FarmerRegisterPage';
@@ -165,6 +165,7 @@ function App() {
         <FarmerRegisterPage 
           onBack={() => setCurrentPage('home')} 
           onRegisterSuccess={(userData, role, msg) => handleRegisterSuccess(userData, role, msg)}
+          onOpenLogin={() => setCurrentPage('login')}
         />
         {/* Toast Notification */}
         {toast && (
@@ -183,6 +184,7 @@ function App() {
         <StoreRegisterPage 
           onBack={() => setCurrentPage('home')} 
           onRegisterSuccess={(userData, role, msg) => handleRegisterSuccess(userData, role, msg)}
+          onOpenLogin={() => setCurrentPage('login')}
         />
         {/* Toast Notification */}
         {toast && (
@@ -201,6 +203,7 @@ function App() {
         <FoundationRegisterPage 
           onBack={() => setCurrentPage('home')} 
           onRegisterSuccess={(userData, role, msg) => handleRegisterSuccess(userData, role, msg)}
+          onOpenLogin={() => setCurrentPage('login')}
         />
         {/* Toast Notification */}
         {toast && (
@@ -219,6 +222,7 @@ function App() {
         <DelivererRegisterPage 
           onBack={() => setCurrentPage('home')} 
           onRegisterSuccess={(userData, role, msg) => handleRegisterSuccess(userData, role, msg)}
+          onOpenLogin={() => setCurrentPage('login')}
         />
         {/* Toast Notification */}
         {toast && (

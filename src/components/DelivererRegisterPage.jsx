@@ -12,7 +12,7 @@ const CITIES = [
   "Santa Marta"
 ];
 
-export default function DelivererRegisterPage({ onBack, onRegisterSuccess }) {
+export default function DelivererRegisterPage({ onBack, onRegisterSuccess, onOpenLogin }) {
   const [form, setForm] = useState({
     nombre: '',
     apellido: '',
@@ -231,6 +231,16 @@ export default function DelivererRegisterPage({ onBack, onRegisterSuccess }) {
             </h1>
             <p className="mt-2 text-sm text-slate-500 text-center sm:text-left">
               Genera ingresos rescatando alimentos de calidad y entregándolos cerca de ti.
+            </p>
+            <p className="mt-2 text-sm text-slate-500 text-center sm:text-left">
+              ¿Ya tienes una cuenta?{' '}
+              <button
+                type="button"
+                onClick={onOpenLogin}
+                className="text-blue-600 font-bold hover:underline cursor-pointer"
+              >
+                Haz clic aquí
+              </button>
             </p>
           </div>
 

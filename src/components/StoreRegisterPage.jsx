@@ -13,7 +13,7 @@ const CITIES = [
 
 import { useState } from 'react';
 
-export default function StoreRegisterPage({ onBack, onRegisterSuccess }) {
+export default function StoreRegisterPage({ onBack, onRegisterSuccess, onOpenLogin }) {
   const [form, setForm] = useState({
     nombres: '',
     apellidos: '',
@@ -167,8 +167,8 @@ export default function StoreRegisterPage({ onBack, onRegisterSuccess }) {
               ¿Ya tienes una cuenta?{' '}
               <button
                 type="button"
-                onClick={() => alert('Inicio de sesión próximamente')}
-                className="text-blue-600 font-bold hover:underline"
+                onClick={onOpenLogin}
+                className="text-blue-600 font-bold hover:underline cursor-pointer"
               >
                 Haz clic aquí
               </button>
