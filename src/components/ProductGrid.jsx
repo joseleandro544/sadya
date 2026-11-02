@@ -1,3 +1,4 @@
+import { api } from '../api';
 import { useState, useEffect, useMemo } from 'react';
 import ProductCard from './ProductCard';
 import { SlidersHorizontal, Heart, ShieldCheck, Loader2 } from 'lucide-react';
@@ -33,7 +34,7 @@ export default function ProductGrid({
     const fetchCatalog = async () => {
       setLoading(true);
       try {
-        const res = await fetch(`/api/products/catalog?lat=${lat}&lng=${lng}&role=${viewerRole}`);
+        const res = await fetch(api(`/api/products/catalog?lat=${lat}&lng=${lng}&role=${viewerRole}`));
         const result = await res.json();
         if (res.ok && result.status === 'ok') {
           setDbProducts(result.data);

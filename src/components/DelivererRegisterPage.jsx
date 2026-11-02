@@ -1,3 +1,4 @@
+import { api } from '../api';
 import { useState, useRef } from 'react';
 import { ArrowLeft, Eye, EyeOff, Lock, Mail, Phone, User, CheckCircle, Upload, Camera } from 'lucide-react';
 
@@ -145,7 +146,7 @@ export default function DelivererRegisterPage({ onBack, onRegisterSuccess, onOpe
     setLoading(true);
     setApiError('');
     try {
-      const res = await fetch('/api/register/deliverer', {
+      const res = await fetch(api('/api/register/deliverer'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

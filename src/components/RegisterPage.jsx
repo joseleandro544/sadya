@@ -1,3 +1,4 @@
+import { api } from '../api';
 import { useState } from 'react';
 import { ArrowLeft, Eye, EyeOff, Phone, User, Mail, Lock, CheckCircle } from 'lucide-react';
 import SocialAuthModal from './SocialAuthModal';
@@ -83,7 +84,7 @@ export default function RegisterPage({ onBack, onRegisterSuccess, onOpenLogin })
     setApiError('');
     setLoading(true);
     try {
-      const res = await fetch('/api/auth/social', {
+      const res = await fetch(api('/api/auth/social'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...socialData, rol: 'Cliente' })
@@ -140,7 +141,7 @@ export default function RegisterPage({ onBack, onRegisterSuccess, onOpenLogin })
 
     setLoading(true);
     try {
-      const res = await fetch('/api/register/client', {
+      const res = await fetch(api('/api/register/client'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

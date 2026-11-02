@@ -1,3 +1,4 @@
+import { api } from '../api';
 import { useState } from 'react';
 import { ArrowLeft, Eye, EyeOff, Lock, Mail, Phone, User, Heart, CheckCircle, MapPin } from 'lucide-react';
 
@@ -88,7 +89,7 @@ export default function FoundationRegisterPage({ onBack, onRegisterSuccess, onOp
 
     setLoading(true);
     try {
-      const res = await fetch('/api/register/foundation', {
+      const res = await fetch(api('/api/register/foundation'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

@@ -1,3 +1,4 @@
+import { api } from '../api';
 import React, { useState, useRef } from 'react';
 import { Eye, EyeOff, ArrowLeft, ShieldAlert, Phone, X } from 'lucide-react';
 import SocialAuthModal from './SocialAuthModal';
@@ -28,7 +29,7 @@ export default function LoginPage({ onBack, onOpenRegister, onLoginSuccess, onOp
     setError('');
     setLoading(true);
     try {
-      const res = await fetch('/api/auth/social', {
+      const res = await fetch(api('/api/auth/social'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(socialData)
@@ -84,7 +85,7 @@ export default function LoginPage({ onBack, onOpenRegister, onLoginSuccess, onOp
     setError('');
     setLoading(true);
     try {
-      const res = await fetch('/api/auth/login', {
+      const res = await fetch(api('/api/auth/login'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ identifier: identifier.trim(), password }),
@@ -112,7 +113,7 @@ export default function LoginPage({ onBack, onOpenRegister, onLoginSuccess, onOp
     setError('');
     setLoading(true);
     try {
-      const res = await fetch('/api/auth/login-code', {
+      const res = await fetch(api('/api/auth/login-code'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ celular: celular.trim() }),
@@ -144,7 +145,7 @@ export default function LoginPage({ onBack, onOpenRegister, onLoginSuccess, onOp
     setOtpError('');
     setLoading(true);
     try {
-      const res = await fetch('/api/auth/verify-otp', {
+      const res = await fetch(api('/api/auth/verify-otp'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ celular: celular.trim(), otp: otp.join('') }),

@@ -20,10 +20,13 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 
 // ── Middlewares Globales ────────────────────────────────
+// Orígenes permitidos: en producción se leen de CORS_ORIGINS (separados por coma)
+const allowedOrigins = process.env.NODE_ENV === 'production'
+  ? (process.env.CORS_ORIGINS || 'https://sadya.co,https://www.sadya.co').split(',').map((o) => o.trim())
+  : ['http://localhost:5185'];
+
 app.use(cors({
-  origin: process.env.NODE_ENV === 'production'
-    ? 'https://tu-dominio.com'           // En producción, restringir al dominio real
-    : 'http://localhost:5185',            // En desarrollo, solo el frontend Vite
+  origin: allowedOrigins,
   credentials: true,
 }));
 

@@ -1,3 +1,4 @@
+import { api } from '../api';
 import { useState } from 'react';
 import { ArrowLeft, MapPin, User, Phone, CheckCircle, Lock, Eye, EyeOff } from 'lucide-react';
 
@@ -66,7 +67,7 @@ export default function FarmerRegisterPage({ onBack, onRegisterSuccess, onOpenLo
     setLoading(true);
 
     try {
-      const res = await fetch('/api/register/farmer', {
+      const res = await fetch(api('/api/register/farmer'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

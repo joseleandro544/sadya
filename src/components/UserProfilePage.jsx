@@ -1,3 +1,4 @@
+import { api } from '../api';
 import React, { useState, useEffect } from 'react';
 import { 
   ArrowLeft, User, Mail, Phone, MapPin, Lock, Info, Save, 
@@ -62,7 +63,7 @@ export default function UserProfilePage({ user, onBack, onProfileUpdate }) {
     try {
       setLoading(true);
       setError('');
-      const res = await fetch(`/api/profile/${userId}`);
+      const res = await fetch(api(`/api/profile/${userId}`));
       const result = await res.json();
       
       if (res.ok && result.status === 'ok') {
@@ -166,7 +167,7 @@ export default function UserProfilePage({ user, onBack, onProfileUpdate }) {
 
     setSaveLoading(true);
     try {
-      const res = await fetch(`/api/profile/${userId}`, {
+      const res = await fetch(api(`/api/profile/${userId}`), {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json'

@@ -1,3 +1,4 @@
+import { api } from '../api';
 import React, { useState, useEffect } from 'react';
 import { 
   ArrowLeft, ShoppingBag, PlusCircle, CheckCircle, ShieldAlert, 
@@ -93,7 +94,7 @@ export default function SellerProductsPage({ user, onBack }) {
   const fetchProducts = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`/api/products/seller/${user.id}`);
+      const res = await fetch(api(`/api/products/seller/${user.id}`));
       const data = await res.json();
       if (res.ok) {
         setProducts(data.data);
@@ -147,7 +148,7 @@ export default function SellerProductsPage({ user, onBack }) {
 
     setSubmitLoading(true);
     try {
-      const res = await fetch('/api/products', {
+      const res = await fetch(api('/api/products'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -193,7 +194,7 @@ export default function SellerProductsPage({ user, onBack }) {
     setError('');
     setSuccess('');
     try {
-      const res = await fetch('/api/products/donate', {
+      const res = await fetch(api('/api/products/donate'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -220,7 +221,7 @@ export default function SellerProductsPage({ user, onBack }) {
     setError('');
     setSuccess('');
     try {
-      const res = await fetch('/api/products/discard', {
+      const res = await fetch(api('/api/products/discard'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
